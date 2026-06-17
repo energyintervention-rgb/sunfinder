@@ -19,6 +19,7 @@ const state = {
   calibrated: false,
   forecastDays: [],
   previewResult: null,      // { azimuth, altitudeDeg, dateTime } or null until computed
+  pitch: null,               // degrees above horizon the camera is pointed; null until beta reported
 };
 
 // ---------- helpers ----------
@@ -287,6 +288,27 @@ function handleOrientation(event){
     state.headingSource = 'relative-uncalibrated';
   }
 
+  // ---- pitch (tilt up/down), used to move the AR sun marker vertically ----
+  // Per the W3C DeviceOrientationEvent spec: when a phone is held upright
+  // in portrait, screen facing the user, beta is approximately 90°
+  // regardless of heading. Tilting the top of the phone backward (camera
+  // pointing up at the sky) DECREASES beta below 90; tilting forward
+  // (camera pointing down) INCREASES it above 90.
+  // So: degrees-above-the-horizon-the-camera-points ≈ 90 − beta.
+  //
+  // KNOWN LIMITATION, stated plainly: this formula is verified against
+  // the W3C spec for the common case (portrait, screen facing the user).
+  // It has NOT been tested on a real device by me — iOS vs Android and
+  // portrait vs landscape are known sources of inconsistency in this
+  // exact API (this is the same category of bug that affected Google's
+  // own Sky Map for years). If the sun moves the WRONG direction when
+  // you tilt, that's a sign this sign needs flipping for your device —
+  // tell me what you observe and I'll correct it from real feedback
+  // rather than guessing further.
+  if (event.beta !== null && event.beta !== undefined) {
+    state.pitch = 90 - event.beta;
+  }
+
   if (heading !== null) {
     state.heading = (heading + 360) % 360;
     orientationActive = true;
@@ -295,6 +317,11 @@ function handleOrientation(event){
     positionMarkers();
     renderAR();
     updateAlignmentBanners();
+  } else if (event.beta !== null && event.beta !== undefined) {
+    // Heading didn't update this event, but pitch did — still refresh
+    // AR so vertical sun position stays live even if alpha is momentarily
+    // unavailable.
+    renderAR();
   }
 }
 
@@ -430,27 +457,73 @@ function renderAR(){
   document.getElementById('arSunriseTime').textContent = 'Sunrise ' + fmtTime(state.today.sunrise);
   document.getElementById('arSunsetTime').textContent = 'Sunset ' + fmtTime(state.today.sunset);
 
+  // Horizon line itself must move with real pitch too, or it will visually
+  // disagree with the now-pitch-aware sun markers. 0° pitch (camera level
+  // with the true horizon) puts the line at screen center; tilting the
+  // phone up moves the horizon line down on screen, and vice versa —
+  // same convention as the marker math below.
+  const horizonEl = document.querySelector('.ar-horizon');
+  if (horizonEl) {
+    const fovV = 70;
+    const horizonTopPct = state.pitch === null
+      ? 60  // fallback to the original fixed placement until pitch is known
+      : Math.max(-20, Math.min(120, 50 + (state.pitch / fovV) * 50));
+    horizonEl.style.top = horizonTopPct + '%';
+  }
+
+  const pitchEl = document.getElementById('pitchReadout');
+  if (pitchEl) {
+    pitchEl.textContent = state.pitch === null
+      ? 'Tilt: waiting for sensor…'
+      : `Tilt: ${state.pitch >= 0 ? '+' : ''}${state.pitch.toFixed(0)}°`;
+  }
+
   const heading = state.heading ?? 0;
   // Map azimuth delta to horizontal screen position.
   // Assume a ~90° horizontal field of view for the mock camera frame.
-  const fov = 90;
+  const fovH = 90;
   function angleToLeftPercent(targetAz){
     let delta = ((targetAz - heading + 540) % 360) - 180; // -180..180
-    const pct = 50 + (delta / fov) * 50;
+    const pct = 50 + (delta / fovH) * 50;
     return Math.max(-20, Math.min(120, pct)); // allow sliding off-screen a bit
   }
+
+  // Map altitude (sun's real height above horizon) against pitch (how
+  // far up/down the phone is currently tilted) to a vertical screen
+  // position. When pitch is unavailable (sensor hasn't reported beta
+  // yet, or device doesn't support it), fall back to a fixed mid-height
+  // placement rather than guessing — this matches the app's existing
+  // policy of showing "--" / a clear fallback instead of inventing data.
+  const fovV = 70; // vertical field of view assumed for the mock camera frame
+  function altitudeToTopPercent(altitudeDeg){
+    if (state.pitch === null) {
+      // No real pitch data yet — keep the previous fixed placement so
+      // the marker doesn't jump to a meaningless position.
+      return 62;
+    }
+    const delta = altitudeDeg - state.pitch; // positive = sun is above where camera points
+    const pct = 50 - (delta / fovV) * 50; // screen "up" = smaller top%, hence the minus
+    return Math.max(-20, Math.min(120, pct));
+  }
+
   const riseLeft = angleToLeftPercent(state.today.sunriseAz);
   const setLeft = angleToLeftPercent(state.today.sunsetAz);
+  // Sunrise/sunset markers represent the horizon-crossing moment, i.e.
+  // altitude = 0° by definition — that's real, not a placeholder.
+  const riseTop = altitudeToTopPercent(0);
+  const setTop = altitudeToTopPercent(0);
 
   document.getElementById('arSunrise').style.left = riseLeft + '%';
-  document.getElementById('arSunrise').style.bottom = '38%';
-  document.getElementById('arSunrise').style.top = 'auto';
-  document.getElementById('arSunrise').style.display = (riseLeft >= -15 && riseLeft <= 115) ? 'flex' : 'none';
+  document.getElementById('arSunrise').style.top = riseTop + '%';
+  document.getElementById('arSunrise').style.bottom = 'auto';
+  document.getElementById('arSunrise').style.display =
+    (riseLeft >= -15 && riseLeft <= 115 && riseTop >= -15 && riseTop <= 115) ? 'flex' : 'none';
 
   document.getElementById('arSunset').style.left = setLeft + '%';
-  document.getElementById('arSunset').style.bottom = '38%';
-  document.getElementById('arSunset').style.top = 'auto';
-  document.getElementById('arSunset').style.display = (setLeft >= -15 && setLeft <= 115) ? 'flex' : 'none';
+  document.getElementById('arSunset').style.top = setTop + '%';
+  document.getElementById('arSunset').style.bottom = 'auto';
+  document.getElementById('arSunset').style.display =
+    (setLeft >= -15 && setLeft <= 115 && setTop >= -15 && setTop <= 115) ? 'flex' : 'none';
 
   renderPreviewAR();
 }
@@ -643,13 +716,20 @@ function renderPreviewAR(){
   let delta = ((state.previewResult.azimuth - heading + 540) % 360) - 180;
   const leftPct = Math.max(-20, Math.min(120, 50 + (delta / fov) * 50));
 
-  // Map altitude to vertical position: 0° altitude sits on the horizon
-  // line (60% down, matching .ar-horizon's `top:60%`), 90° (straight up)
-  // moves toward the top of the frame. Simplified linear mapping for a
-  // flat 2D mock view, not a real perspective projection.
+  // Same real pitch-based vertical mapping used for the live sunrise/
+  // sunset markers in renderAR() — uses the phone's actual measured
+  // tilt (state.pitch) rather than a fixed horizon assumption, so this
+  // ghost marker moves correctly as you tilt the phone, same as the
+  // live markers now do.
   const altitudeDeg = state.previewResult.altitudeDeg;
-  const horizonTopPct = 60;
-  const topPct = Math.max(4, horizonTopPct - (Math.max(0, altitudeDeg) / 90) * (horizonTopPct - 8));
+  const fovV = 70;
+  let topPct;
+  if (state.pitch === null) {
+    topPct = 62; // no real pitch data yet — fixed fallback, not a guess dressed as data
+  } else {
+    const vDelta = altitudeDeg - state.pitch;
+    topPct = Math.max(-20, Math.min(120, 50 - (vDelta / fovV) * 50));
+  }
 
   marker.style.left = leftPct + '%';
   marker.style.top = topPct + '%';
