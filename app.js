@@ -283,7 +283,63 @@ function handleOrientation(event){
     rotateDial();
     positionMarkers();
     renderAR();
+    updateAlignmentBanners();
   }
+}
+
+// ---------- "facing the sun" alignment banners ----------
+// Tolerance is intentionally tight (±5°) per explicit request. Note this is
+// close to or below the real-world accuracy of many phone magnetometers,
+// so on some devices this may flicker near the edge of the range — that's
+// a hardware/sensor limitation, not a logic bug in this function.
+const ALIGNMENT_TOLERANCE_DEG = 5;
+
+// Shortest signed angular distance from `a` to `b`, result in [-180, 180].
+function angularDelta(a, b){
+  return ((b - a + 540) % 360) - 180;
+}
+
+function updateAlignmentBanners(){
+  if (!state.today || state.heading === null) return;
+
+  const riseDelta = Math.abs(angularDelta(state.heading, state.today.sunriseAz));
+  const setDelta = Math.abs(angularDelta(state.heading, state.today.sunsetAz));
+
+  let bannerHtml = null;
+  let bannerClass = null;
+
+  // If both happen to be within tolerance at once (only possible for
+  // locations/dates where sunrise and sunset azimuths are very close
+  // together), prefer whichever is more precisely aligned.
+  if (riseDelta <= ALIGNMENT_TOLERANCE_DEG && setDelta <= ALIGNMENT_TOLERANCE_DEG) {
+    if (riseDelta <= setDelta) {
+      bannerHtml = `○ Facing Sunrise — ${fmtTime(state.today.sunrise)}`;
+      bannerClass = 'sunrise-align';
+    } else {
+      bannerHtml = `● Facing Sunset — ${fmtTime(state.today.sunset)}`;
+      bannerClass = 'sunset-align';
+    }
+  } else if (riseDelta <= ALIGNMENT_TOLERANCE_DEG) {
+    bannerHtml = `○ Facing Sunrise — ${fmtTime(state.today.sunrise)}`;
+    bannerClass = 'sunrise-align';
+  } else if (setDelta <= ALIGNMENT_TOLERANCE_DEG) {
+    bannerHtml = `● Facing Sunset — ${fmtTime(state.today.sunset)}`;
+    bannerClass = 'sunset-align';
+  }
+
+  [ 'homeAlignBanner', 'arAlignBanner' ].forEach(id=>{
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (bannerHtml){
+      el.textContent = bannerHtml;
+      el.className = el.id === 'arAlignBanner'
+        ? `align-banner align-banner-ar ${bannerClass}`
+        : `align-banner ${bannerClass}`;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  });
 }
 
 function updateCompassCaption(){
