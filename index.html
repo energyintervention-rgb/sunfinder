@@ -313,10 +313,12 @@ body{
   position:absolute;inset:0;
   width:100%;height:100%;
   object-fit:cover;
+  z-index:1;
 }
 .ar-fallback{
   position:absolute;inset:0;
   background:linear-gradient(180deg,#1a2540 0%, #0a0f1c 70%);
+  z-index:0;
 }
 .ar-horizon{
   position:absolute;
@@ -324,12 +326,14 @@ body{
   height:2px;
   background:rgba(255,255,255,0.25);
   top:60%;
+  z-index:2;
 }
 .ar-marker{
   position:absolute;
   display:flex;flex-direction:column;align-items:center;gap:6px;
   transform:translateX(-50%);
   transition:left 0.2s linear;
+  z-index:3;
 }
 .ar-marker .ar-time{
   font-family:var(--mono);
@@ -350,6 +354,7 @@ body{
   background:rgba(0,0,0,0.35);
   padding:8px 10px;
   border-radius:10px;
+  z-index:3;
 }
 .ar-controls{
   margin:14px 20px 0;
