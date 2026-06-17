@@ -228,6 +228,43 @@ body{
   margin-bottom:6px;
 }
 
+.align-banner{
+  margin:4px 20px 4px;
+  padding:12px 16px;
+  border-radius:var(--radius-sm);
+  font-family:var(--display);
+  font-weight:600;
+  font-size:14px;
+  text-align:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  animation:alignPulse 1.6s ease-in-out infinite;
+}
+.align-banner.sunrise-align{
+  background:linear-gradient(135deg, var(--sunrise-glow), var(--sunrise));
+  color:#241200;
+}
+.align-banner.sunset-align{
+  background:linear-gradient(135deg, var(--sunset-glow), var(--sunset));
+  color:#fff;
+}
+.align-banner-ar{
+  position:absolute;
+  left:14px;right:14px;
+  bottom:14px;
+  margin:0;
+  z-index:4;
+}
+@keyframes alignPulse{
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce){
+  .align-banner{ animation:none; }
+}
+
 /* ---------- today summary ---------- */
 .today-grid{
   display:flex;
@@ -561,6 +598,7 @@ body{
         <div class="az" id="sunsetAz">Az --°</div>
       </div>
     </div>
+    <div class="align-banner" id="homeAlignBanner" style="display:none;"></div>
     <div class="note-small" id="dataNote">Calculations run locally using the SunCalc astronomical library once your location is known. No network request is needed for this math.</div>
   </section>
 
@@ -582,6 +620,7 @@ body{
         <span class="ar-time" id="arSunsetTime">Sunset --:--</span>
         <span class="ar-glyph glyph sunset"></span>
       </div>
+      <div class="align-banner align-banner-ar" id="arAlignBanner" style="display:none;"></div>
     </div>
     <div class="ar-controls">
       <button class="btn" id="arCameraBtn">Enable camera</button>
