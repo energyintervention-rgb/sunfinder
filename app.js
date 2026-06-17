@@ -18,6 +18,8 @@ const state = {
   arEnabled: true,
   calibrated: false,
   forecastDays: [],
+  previewEnabled: false,    // user-toggled, independent for Home/AR via shared state
+  previewResult: null,      // { azimuth, altitudeDeg, dateTime } or null if not yet computed
 };
 
 // ---------- helpers ----------
@@ -440,7 +442,149 @@ function renderAR(){
   document.getElementById('arSunset').style.bottom = '38%';
   document.getElementById('arSunset').style.top = 'auto';
   document.getElementById('arSunset').style.display = (setLeft >= -15 && setLeft <= 115) ? 'flex' : 'none';
+
+  renderPreviewAR();
 }
+
+// =========================================================
+// Date/time PREVIEW feature
+//
+// This computes the sun's REAL azimuth and altitude for any
+// date/time the user picks, using the same SunCalc.getPosition()
+// call already used elsewhere — not a guessed or hardcoded value.
+//
+// What this does NOT do: it does not turn the compass dial into
+// a true 3D sky view. The Home dial is flat and only shows compass
+// direction (azimuth), so "altitude" (height above horizon) is
+// shown as a text readout there, not a visual position — faking
+// a 3D placement on a 2D dial would be misleading. On the AR
+// screen, altitude DOES get a real visual meaning: higher altitude
+// moves the marker higher on screen, same idea as horizon = 0°.
+// =========================================================
+
+function getPreviewDateTimeLocal(dateInputId, timeInputId){
+  const dateVal = document.getElementById(dateInputId).value;   // 'YYYY-MM-DD'
+  const timeVal = document.getElementById(timeInputId).value;   // 'HH:MM'
+  if (!dateVal || !timeVal) return null;
+  const dt = new Date(`${dateVal}T${timeVal}:00`);
+  if (isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function computePreview(dateInputId, timeInputId, resultElId){
+  const resultEl = document.getElementById(resultElId);
+  if (state.lat === null || state.lon === null || typeof SunCalc === 'undefined') {
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<span class="preview-warn">Location not available yet — cannot compute a preview.</span>';
+    state.previewResult = null;
+    return;
+  }
+
+  const dt = getPreviewDateTimeLocal(dateInputId, timeInputId);
+  if (!dt) {
+    resultEl.style.display = 'none';
+    state.previewResult = null;
+    return;
+  }
+
+  // SunCalc.getPosition wants a UTC-comparable Date object — a JS Date
+  // constructed from local "YYYY-MM-DDTHH:MM:00" is already correctly
+  // anchored to the browser's local timezone, so this is real, not a guess.
+  const pos = SunCalc.getPosition(dt, state.lat, state.lon);
+  const azimuth = azToCompassBearing(pos.azimuth);
+  const altitudeDeg = pos.altitude * 180 / Math.PI;
+
+  state.previewResult = { azimuth, altitudeDeg, dateTime: dt };
+
+  resultEl.style.display = 'block';
+  if (altitudeDeg < 0) {
+    resultEl.innerHTML =
+      `Az ${fmtAz(azimuth)} · Altitude ${altitudeDeg.toFixed(1)}° ` +
+      `<span class="preview-warn">(below horizon — sun not visible at this time)</span>`;
+  } else {
+    resultEl.innerHTML = `Az ${fmtAz(azimuth)} · Altitude ${altitudeDeg.toFixed(1)}° above horizon`;
+  }
+
+  positionPreviewMarker();
+  renderPreviewAR();
+}
+
+function positionPreviewMarker(){
+  const marker = document.getElementById('previewMarker');
+  if (!state.previewEnabled || !state.previewResult) {
+    marker.style.display = 'none';
+    return;
+  }
+  const heading = state.heading ?? 0;
+  const angle = state.previewResult.azimuth - heading;
+  marker.style.display = 'block';
+  marker.style.transform = `rotate(${angle}deg)`;
+  marker.querySelector('.dot-ring').style.transform = `translate(-65px,-148px) rotate(${-angle}deg)`;
+  document.getElementById('previewAzLabel').textContent = fmtAz(state.previewResult.azimuth);
+}
+
+function renderPreviewAR(){
+  const marker = document.getElementById('arPreview');
+  if (!marker) return;
+  if (!state.previewEnabled || !state.previewResult) {
+    marker.style.display = 'none';
+    return;
+  }
+  const heading = state.heading ?? 0;
+  const fov = 90;
+  let delta = ((state.previewResult.azimuth - heading + 540) % 360) - 180;
+  const leftPct = Math.max(-20, Math.min(120, 50 + (delta / fov) * 50));
+
+  // Map altitude to vertical position: 0° altitude sits on the horizon
+  // line (60% down, matching .ar-horizon's `top:60%`), 90° (straight up)
+  // moves toward the top of the frame. This is a simplified linear
+  // mapping for a flat 2D mock view, not a real perspective projection.
+  const altitudeDeg = state.previewResult.altitudeDeg;
+  const horizonTopPct = 60;
+  const topPct = Math.max(4, horizonTopPct - (Math.max(0, altitudeDeg) / 90) * (horizonTopPct - 8));
+
+  marker.style.left = leftPct + '%';
+  marker.style.top = topPct + '%';
+  marker.style.bottom = 'auto';
+  marker.style.display = (leftPct >= -15 && leftPct <= 115 && altitudeDeg >= -5) ? 'flex' : 'none';
+
+  document.getElementById('arPreviewTime').textContent =
+    'Preview ' + fmtTime(state.previewResult.dateTime);
+}
+
+function wirePreviewControls(toggleId, inputsId, dateId, timeId, resultId){
+  const toggle = document.getElementById(toggleId);
+  const inputs = document.getElementById(inputsId);
+  const dateInput = document.getElementById(dateId);
+  const timeInput = document.getElementById(timeId);
+
+  // Default the inputs to "now" so there's a sensible starting point.
+  const now = new Date();
+  dateInput.value = now.toISOString().slice(0,10);
+  timeInput.value = now.toTimeString().slice(0,5);
+
+  toggle.addEventListener('click', ()=>{
+    state.previewEnabled = !state.previewEnabled;
+    toggle.classList.toggle('on', state.previewEnabled);
+    inputs.style.display = state.previewEnabled ? 'flex' : 'none';
+    document.getElementById(resultId).style.display = state.previewEnabled ? 'block' : 'none';
+    if (state.previewEnabled) {
+      computePreview(dateId, timeId, resultId);
+    } else {
+      state.previewResult = null;
+      positionPreviewMarker();
+      renderPreviewAR();
+    }
+  });
+
+  dateInput.addEventListener('change', ()=> computePreview(dateId, timeId, resultId));
+  timeInput.addEventListener('change', ()=> computePreview(dateId, timeId, resultId));
+}
+
+wirePreviewControls('previewToggle', 'previewInputs', 'previewDate', 'previewTime', 'previewResult');
+wirePreviewControls('previewToggleAr', 'previewInputsAr', 'previewDateAr', 'previewTimeAr', 'previewResultAr');
+
+
 
 // ---------- init ----------
 drawTicks();
