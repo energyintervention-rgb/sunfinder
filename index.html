@@ -490,6 +490,18 @@ body{
   border-radius:10px;
   z-index:3;
 }
+.pitch-readout{
+  position:absolute;
+  top:62px;
+  right:14px;
+  font-size:10.5px;
+  font-family:var(--mono);
+  color:rgba(255,255,255,0.75);
+  background:rgba(0,0,0,0.4);
+  padding:5px 9px;
+  border-radius:8px;
+  z-index:5;
+}
 .ar-controls{
   margin:14px 20px 0;
   display:flex;
@@ -736,7 +748,7 @@ body{
     <div class="ar-view" id="arView">
       <div class="sky-bg" id="arSkyBg"></div>
       <div class="ar-horizon"></div>
-      <div class="ar-note">Simplified mock-up: markers are positioned using compass heading math, not real camera depth/AR tracking.</div>
+      <div class="ar-note">Simplified mock-up: horizontal position uses real compass heading, vertical position uses real device tilt — not true camera depth/AR tracking.</div>
       <div class="ar-marker" id="arSunrise">
         <span class="ar-time" id="arSunriseTime">Sunrise --:--</span>
         <span class="ar-glyph glyph sunrise"></span>
@@ -750,12 +762,13 @@ body{
         <span class="ar-glyph glyph preview-glyph">◌</span>
       </div>
       <div class="align-banner align-banner-ar" id="arAlignBanner" style="display:none;"></div>
+      <div class="pitch-readout" id="pitchReadout">Tilt: waiting for sensor…</div>
     </div>
     <div class="ar-controls">
       <button class="btn" id="arCameraBtn">Enable camera</button>
       <button class="btn primary" id="arCalibBtn">Calibrate compass</button>
     </div>
-    <div class="note-small">Markers shift left/right as you turn, based on the difference between your current compass heading and each event's azimuth.</div>
+    <div class="note-small">Markers shift left/right with compass heading and up/down with how far you tilt the phone, based on the difference between your current orientation and each event's real direction/height.</div>
   </section>
 
   <!-- ============ FORECAST ============ -->
