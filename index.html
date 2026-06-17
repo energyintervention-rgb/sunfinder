@@ -265,28 +265,63 @@ body{
   .align-banner{ animation:none; }
 }
 
-/* ---------- date/time preview filter ---------- */
-.preview-card{
-  margin:4px 20px 12px;
-  padding:14px 16px;
-  border-radius:var(--radius-sm);
+/* ---------- always-on sky view + date/time picker ---------- */
+.sky-card{
+  margin:4px 20px 16px;
+  padding:14px;
+  border-radius:var(--radius);
   background:var(--panel);
   border:1px solid var(--panel-border);
   backdrop-filter:blur(8px);
 }
-.preview-toggle-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+.sky-view{
+  position:relative;
+  height:170px;
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  /* default = daytime gradient; JS overwrites this based on real altitude */
+  background:linear-gradient(180deg,#3a7bd5 0%, #aee4ff 70%, #ffe9c4 100%);
+  transition:background 1s ease;
+  margin-bottom:12px;
 }
-.preview-title{
-  font-size:13px;
-  font-weight:600;
+.sky-horizon-line{
+  position:absolute;
+  left:0;right:0;
+  bottom:30%;
+  height:1px;
+  background:rgba(255,255,255,0.35);
+}
+.sky-sun{
+  position:absolute;
+  width:34px;height:34px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff6d8, #ffc34d 60%, #ff9d2e);
+  box-shadow:0 0 18px 6px rgba(255,196,77,0.55);
+  transform:translate(-50%,-50%);
+  transition:left 0.5s ease, top 0.5s ease, opacity 0.5s ease;
+  z-index:2;
+}
+.sky-sun-glow{
+  position:absolute;
+  width:90px;height:90px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,210,120,0.35), transparent 70%);
+  transform:translate(-50%,-50%);
+  transition:left 0.5s ease, top 0.5s ease, opacity 0.5s ease;
+  z-index:1;
+}
+.sky-readout{
+  position:absolute;
+  left:10px;bottom:8px;
+  font-family:var(--mono);
+  font-size:11px;
+  color:rgba(255,255,255,0.85);
+  text-shadow:0 1px 3px rgba(0,0,0,0.4);
+  z-index:3;
 }
 .preview-inputs{
   display:flex;
   gap:8px;
-  margin-top:12px;
 }
 .preview-input{
   flex:1;
@@ -307,17 +342,15 @@ body{
   font-family:var(--mono);
   font-size:12px;
   color:var(--muted);
-  display:flex;
-  flex-direction:column;
-  gap:3px;
 }
 .preview-result .preview-warn{
   color:#c97a12;
 }
 
-/* ---------- ghost/preview sun marker — visually distinct from
-   the live sunrise/sunset markers, since this represents a
-   simulated date/time, not the real current state ---------- */
+/* ---------- ghost/preview sun marker on the compass dial —
+   visually distinct from the live sunrise/sunset markers, since
+   this represents a simulated date/time, not the real current
+   state ---------- */
 .glyph.preview-glyph{
   background:transparent;
   border:2px dashed var(--muted);
@@ -415,9 +448,10 @@ body{
   object-fit:cover;
   z-index:1;
 }
-.ar-fallback{
+.sky-bg{
   position:absolute;inset:0;
   background:linear-gradient(180deg,#1a2540 0%, #0a0f1c 70%);
+  transition:background 0.6s ease;
   z-index:0;
 }
 .ar-horizon{
@@ -621,16 +655,18 @@ body{
       <span class="accuracy-pill acc-warn" id="accuracyPill">GPS: --</span>
     </div>
 
-    <div class="preview-card">
-      <div class="preview-toggle-row">
-        <span class="preview-title">Preview sun position</span>
-        <button class="switch" id="previewToggle"><span class="knob"></span></button>
+    <div class="sky-card">
+      <div class="sky-view" id="skyView">
+        <div class="sky-sun-glow" id="skySunGlow" style="display:none;"></div>
+        <div class="sky-sun" id="skySun" style="display:none;"></div>
+        <div class="sky-horizon-line"></div>
+        <div class="sky-readout" id="skyReadout">Set a location to see the sky.</div>
       </div>
-      <div class="preview-inputs" id="previewInputs" style="display:none;">
+      <div class="preview-inputs">
         <input type="date" id="previewDate" class="preview-input">
         <input type="time" id="previewTime" class="preview-input">
+        <button class="iconbtn" id="previewNowBtn" title="Jump to now">⟳</button>
       </div>
-      <div class="preview-result" id="previewResult" style="display:none;"></div>
     </div>
 
     <div class="compass-wrap">
@@ -689,19 +725,16 @@ body{
       <div class="brand">AR Mode</div>
       <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">mock-up</span>
     </div>
-    <div class="preview-card">
-      <div class="preview-toggle-row">
-        <span class="preview-title">Preview sun position</span>
-        <button class="switch" id="previewToggleAr"><span class="knob"></span></button>
-      </div>
-      <div class="preview-inputs" id="previewInputsAr" style="display:none;">
+    <div class="sky-card">
+      <div class="preview-inputs">
         <input type="date" id="previewDateAr" class="preview-input">
         <input type="time" id="previewTimeAr" class="preview-input">
+        <button class="iconbtn" id="previewNowBtnAr" title="Jump to now">⟳</button>
       </div>
-      <div class="preview-result" id="previewResultAr" style="display:none;"></div>
+      <div class="preview-result" id="previewResultAr"></div>
     </div>
     <div class="ar-view" id="arView">
-      <div class="ar-fallback"></div>
+      <div class="sky-bg" id="arSkyBg"></div>
       <div class="ar-horizon"></div>
       <div class="ar-note">Simplified mock-up: markers are positioned using compass heading math, not real camera depth/AR tracking.</div>
       <div class="ar-marker" id="arSunrise">
