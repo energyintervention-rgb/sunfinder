@@ -628,6 +628,102 @@ body{
   margin:8px 20px 14px;
 }
 
+/* ---------- Solar Advisor ---------- */
+.solar-disclaimer{
+  margin:0 20px 16px;
+  padding:14px 16px;
+  border-radius:var(--radius-sm);
+  background:rgba(255,157,60,0.12);
+  border:1px solid rgba(255,157,60,0.3);
+  font-size:12px;
+  line-height:1.6;
+  color:var(--ink);
+}
+.solar-month-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  margin:0 20px 16px;
+}
+.solar-month-label{
+  font-family:var(--mono);
+  font-weight:700;
+  font-size:16px;
+  min-width:120px;
+  text-align:center;
+}
+.solar-result-grid{
+  display:flex;
+  gap:12px;
+  margin:0 20px 16px;
+}
+.solar-result-card{
+  flex:1;
+  border-radius:var(--radius-sm);
+  padding:16px;
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  backdrop-filter:blur(8px);
+  text-align:center;
+}
+.solar-result-card .label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.solar-big-value{
+  font-family:var(--mono);
+  font-weight:700;
+  font-size:28px;
+  color:var(--sunrise);
+}
+.solar-sub{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+  margin-top:4px;
+}
+.solar-diagram-wrap{
+  margin:0 20px 16px;
+  padding:14px;
+  border-radius:var(--radius-sm);
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  backdrop-filter:blur(8px);
+}
+.solar-diagram{
+  position:relative;
+  height:140px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+.solar-ground{
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:2px;
+  background:var(--muted);
+}
+.solar-panel{
+  position:relative;
+  width:90px;
+  height:8px;
+  background:linear-gradient(135deg, var(--sunrise-glow), var(--sunrise));
+  border-radius:3px;
+  transform-origin:left bottom;
+  transition:transform 0.6s ease;
+  margin-bottom:0;
+}
+.solar-sun-icon{
+  position:absolute;
+  top:6px;right:18px;
+  font-size:20px;
+  color:var(--sunrise);
+}
+
 .note-small{
   margin:8px 20px 0;
   font-size:11px;
@@ -783,6 +879,44 @@ body{
     <div class="note-small" id="forecastNote">Cached locally for offline viewing — computed once from your coordinates, no server round-trip required.</div>
   </section>
 
+  <!-- ============ SOLAR ADVISOR ============ -->
+  <section class="screen" id="screen-solar">
+    <div class="screen-title">Solar Panel Advisor</div>
+
+    <div class="solar-disclaimer">
+      <strong>Clear-sky estimate only.</strong> This calculates the geometrically optimal panel angle using real sun-position astronomy, assuming a cloudless sky. It does NOT account for clouds, haze, or humidity — real-world studies for Malaysia (which DO include atmospheric data) generally recommend a flatter 0–15° tilt year-round. Treat this as a starting point for the underlying geometry, not a substitute for a professional site assessment.
+    </div>
+
+    <div class="solar-month-row">
+      <button class="iconbtn" id="solarPrevMonth">‹</button>
+      <span class="solar-month-label" id="solarMonthLabel">—</span>
+      <button class="iconbtn" id="solarNextMonth">›</button>
+    </div>
+
+    <div class="solar-result-grid">
+      <div class="solar-result-card">
+        <div class="label">Recommended Tilt</div>
+        <div class="solar-big-value" id="solarTiltValue">--°</div>
+        <div class="solar-sub">from horizontal</div>
+      </div>
+      <div class="solar-result-card">
+        <div class="label">Recommended Facing</div>
+        <div class="solar-big-value" id="solarAzValue">--°</div>
+        <div class="solar-sub" id="solarAzCompass">—</div>
+      </div>
+    </div>
+
+    <div class="solar-diagram-wrap">
+      <div class="solar-diagram" id="solarDiagram">
+        <div class="solar-ground"></div>
+        <div class="solar-panel" id="solarPanelViz"></div>
+        <div class="solar-sun-icon">☀</div>
+      </div>
+    </div>
+
+    <div class="note-small" id="solarComputeNote">Calculating…</div>
+  </section>
+
   <!-- ============ SETTINGS ============ -->
   <section class="screen" id="screen-settings">
     <div class="screen-title">Settings</div>
@@ -832,6 +966,7 @@ body{
     <button class="navbtn active" data-screen="home"><span class="ic">⌖</span>Home</button>
     <button class="navbtn" data-screen="ar"><span class="ic">▣</span>AR Mode</button>
     <button class="navbtn" data-screen="forecast"><span class="ic">☰</span>Forecast</button>
+    <button class="navbtn" data-screen="solar"><span class="ic">◐</span>Solar</button>
     <button class="navbtn" data-screen="settings"><span class="ic">⚙</span>Settings</button>
   </nav>
 </div>
