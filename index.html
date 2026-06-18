@@ -313,7 +313,7 @@ body{
   gap:5px;
 }
 .sky-time-glyph{
-  font-size:11px;
+  font-size:12px;
   color:var(--sunrise);
 }
 .sky-time-glyph-set{
@@ -322,8 +322,10 @@ body{
 .sky-time-val{
   font-family:var(--mono);
   font-weight:700;
-  font-size:13px;
-  color:rgba(255,255,255,0.9);
+  font-size:15px;
+  color:#ffffff;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
+  letter-spacing:0.03em;
 }
 .preview-inputs{
   display:flex;
@@ -822,13 +824,13 @@ body{
 
         <!-- Sunrise/sunset time labels inside panel -->
         <div class="sky-time-labels">
-          <div class="sky-time-item sky-time-rise">
-            <span class="sky-time-glyph">○</span>
-            <span class="sky-time-val" id="skyRiseLabel">--:--</span>
-          </div>
           <div class="sky-time-item sky-time-set">
-            <span class="sky-time-val" id="skySetLabel">--:--</span>
             <span class="sky-time-glyph sky-time-glyph-set">●</span>
+            <span class="sky-time-val" id="skySetLabel">--:--</span>
+          </div>
+          <div class="sky-time-item sky-time-rise">
+            <span class="sky-time-val" id="skyRiseLabel">--:--</span>
+            <span class="sky-time-glyph">○</span>
           </div>
         </div>
 
