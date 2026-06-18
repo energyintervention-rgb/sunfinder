@@ -255,18 +255,24 @@ function drawTicks(){
 // ---------- positioning sun markers on dial relative to heading ----------
 function positionMarkers(){
   if (!state.today) return;
-  const heading = state.heading ?? 0; // if no sensor, dial assumes "up = current heading unknown, default 0/N"
+  const heading = state.heading ?? 0;
   const sunriseAngle = state.today.sunriseAz - heading;
   const sunsetAngle = state.today.sunsetAz - heading;
 
   document.getElementById('sunriseMarker').style.transform = `rotate(${sunriseAngle}deg)`;
   document.getElementById('sunsetMarker').style.transform = `rotate(${sunsetAngle}deg)`;
 
-  // counter-rotate labels so text stays upright
   document.getElementById('sunriseMarker').querySelector('.dot-ring').style.transform =
     `translate(-65px,-148px) rotate(${-sunriseAngle}deg)`;
   document.getElementById('sunsetMarker').querySelector('.dot-ring').style.transform =
     `translate(-65px,-148px) rotate(${-sunsetAngle}deg)`;
+
+  // Redraw the sky panel path arc when heading changes — the arc shifts
+  // horizontally with compass heading just like the sun dot does.
+  if (state.previewResult) {
+    drawSkyPath('skyPathLine', state.previewResult.dateTime, 'sky');
+    positionPreviewMarker();
+  }
 }
 
 // rotate whole dial opposite to heading so "N" tracks real north visually
@@ -676,6 +682,7 @@ function renderSkyView(){
     readout.textContent = 'Pick a date and time to preview the sky.';
     sun.style.display = 'none';
     glow.style.display = 'none';
+    drawSkyPath('skyPathLine', null, 'sky'); // clear the path
     return;
   }
 
@@ -683,17 +690,12 @@ function renderSkyView(){
   view.style.background = skyGradientForAltitude(altitudeDeg);
 
   const heading = state.heading ?? 0;
-  const fov = 100; // wider than AR's 90° since this is a standalone panel, not a camera FOV
+  const fov = 100;
   const delta = ((azimuth - heading + 540) % 360) - 180;
   const leftPct = Math.max(-5, Math.min(105, 50 + (delta / fov) * 50));
 
-  // 0° altitude sits on the horizon line (70% down, matching .sky-horizon-line),
-  // 90° (straight overhead) moves to near the top. Simplified linear mapping,
-  // not a true perspective projection.
   const horizonPct = 70;
   const topPct = Math.max(6, horizonPct - (Math.max(0, altitudeDeg) / 90) * (horizonPct - 8));
-  // Below the horizon, let the sun sink visually rather than vanish abruptly,
-  // capped so it doesn't run off the bottom of the panel.
   const belowPct = Math.min(96, horizonPct + (Math.max(0, -altitudeDeg) / 30) * (96 - horizonPct));
   const finalTopPct = altitudeDeg >= 0 ? topPct : belowPct;
 
@@ -709,6 +711,114 @@ function renderSkyView(){
   readout.textContent =
     `${fmtTime(dateTime)} · Az ${fmtAz(azimuth)} · Alt ${altitudeDeg.toFixed(1)}°` +
     (altitudeDeg < 0 ? ' (below horizon)' : '');
+
+  // Draw the sun's path arc for the SELECTED date (matches the date picker)
+  drawSkyPath('skyPathLine', dateTime, 'sky');
+}
+
+// =========================================================
+// Sun path arc — dashed line + arrowhead
+//
+// Samples the sun's real position every 15 minutes across
+// the full daylight window for a given date and location,
+// then draws those as an SVG dashed path with an arrowhead
+// near the western (afternoon) end showing direction of travel.
+//
+// The coordinate mapping uses the same azimuth→horizontal and
+// altitude→vertical formulas already used for the sun dot, so
+// the arc is geometrically consistent with the dot's position —
+// if you select a time on the picker, the dot should sit exactly
+// ON the arc.
+// =========================================================
+
+function computeSunPathPoints(date, lat, lon, heading, fovH, fovV, horizonPct, pitch){
+  // Build a UTC-anchored local-midnight for this date at this longitude.
+  const utcOffsetHours = estimateUtcOffsetHours(lon);
+  const localMidnightUtcMs = Date.UTC(
+    date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0
+  ) - utcOffsetHours * 3600 * 1000;
+
+  const points = [];
+  for (let mins = 0; mins < 24 * 60; mins += 15) {
+    const t = new Date(localMidnightUtcMs + mins * 60000);
+    const pos = SunCalc.getPosition(t, lat, lon);
+    const altDeg = pos.altitude * 180 / Math.PI;
+    if (altDeg < -4) continue; // skip deep night, keep just-below-horizon for smooth fade-in
+
+    const azCompass = azToCompassBearing(pos.azimuth);
+    const delta = ((azCompass - heading + 540) % 360) - 180;
+    const leftPct = 50 + (delta / fovH) * 50;
+
+    // Vertical: same formula as renderSkyView / renderPreviewAR
+    let topPct;
+    if (pitch !== null) {
+      // AR mode: altitude relative to current camera tilt
+      const vDelta = altDeg - pitch;
+      topPct = 50 - (vDelta / fovV) * 50;
+    } else {
+      // Sky panel: fixed horizon at horizonPct
+      if (altDeg >= 0) {
+        topPct = Math.max(6, horizonPct - (altDeg / 90) * (horizonPct - 8));
+      } else {
+        topPct = Math.min(96, horizonPct + ((-altDeg) / 30) * (96 - horizonPct));
+      }
+    }
+
+    points.push({ leftPct, topPct, altDeg, mins });
+  }
+  return points;
+}
+
+function drawSkyPath(pathElId, dateTime, mode){
+  const pathEl = document.getElementById(pathElId);
+  if (!pathEl) return;
+
+  if (!state.lat || !state.lon || !dateTime || typeof SunCalc === 'undefined') {
+    pathEl.setAttribute('d', '');
+    return;
+  }
+
+  const heading = state.heading ?? 0;
+  const fovH = mode === 'sky' ? 100 : 90;
+  const fovV = 70;
+  const horizonPct = mode === 'sky' ? 70 : 60;
+  const pitch = mode === 'ar' ? state.pitch : null;
+
+  const points = computeSunPathPoints(
+    dateTime, state.lat, state.lon,
+    heading, fovH, fovV, horizonPct, pitch
+  );
+
+  if (points.length < 2) {
+    pathEl.setAttribute('d', '');
+    return;
+  }
+
+  // Build SVG path using percentage-based viewBox coordinates.
+  // We work in a 100×100 coordinate space matching the % positions,
+  // so the path scales correctly with any panel size.
+  // The SVG element itself has width/height=100% so we can use
+  // a viewBox="0 0 100 100" and preserveAspectRatio="none".
+  const svg = pathEl.closest('svg');
+  if (svg && !svg.getAttribute('viewBox')) {
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('preserveAspectRatio', 'none');
+  }
+
+  // Only draw points that are reasonably on-screen (allow slight overflow)
+  const visible = points.filter(p => p.leftPct >= -10 && p.leftPct <= 110 && p.topPct >= -10 && p.topPct <= 110);
+  if (visible.length < 2) {
+    pathEl.setAttribute('d', '');
+    return;
+  }
+
+  // Build the path — M for first, L for subsequent
+  let d = `M ${visible[0].leftPct.toFixed(1)},${visible[0].topPct.toFixed(1)}`;
+  for (let i = 1; i < visible.length; i++) {
+    d += ` L ${visible[i].leftPct.toFixed(1)},${visible[i].topPct.toFixed(1)}`;
+  }
+
+  pathEl.setAttribute('d', d);
 }
 
 function positionPreviewMarker(){
@@ -732,6 +842,7 @@ function renderPreviewAR(){
   if (!marker) return;
   if (!state.previewResult) {
     marker.style.display = 'none';
+    drawSkyPath('arPathLine', null, 'ar'); // clear path
     return;
   }
 
@@ -744,16 +855,11 @@ function renderPreviewAR(){
   let delta = ((state.previewResult.azimuth - heading + 540) % 360) - 180;
   const leftPct = Math.max(-20, Math.min(120, 50 + (delta / fov) * 50));
 
-  // Same real pitch-based vertical mapping used for the live sunrise/
-  // sunset markers in renderAR() — uses the phone's actual measured
-  // tilt (state.pitch) rather than a fixed horizon assumption, so this
-  // ghost marker moves correctly as you tilt the phone, same as the
-  // live markers now do.
   const altitudeDeg = state.previewResult.altitudeDeg;
   const fovV = 70;
   let topPct;
   if (state.pitch === null) {
-    topPct = 62; // no real pitch data yet — fixed fallback, not a guess dressed as data
+    topPct = 62;
   } else {
     const vDelta = altitudeDeg - state.pitch;
     topPct = Math.max(-20, Math.min(120, 50 - (vDelta / fovV) * 50));
@@ -766,6 +872,9 @@ function renderPreviewAR(){
 
   document.getElementById('arPreviewTime').textContent =
     'Preview ' + fmtTime(state.previewResult.dateTime);
+
+  // Draw the sun path arc for the selected date on the AR overlay
+  drawSkyPath('arPathLine', state.previewResult.dateTime, 'ar');
 }
 
 function wirePreviewControls(dateId, timeId, resultId, nowBtnId){
