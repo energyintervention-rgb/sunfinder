@@ -268,8 +268,7 @@ function positionMarkers(){
   document.getElementById('sunsetMarker').querySelector('.dot-ring').style.transform =
     `translate(-65px,-148px) rotate(${-sunsetAngle}deg)`;
 
-  // Redraw the sky panel arc when heading changes
-  renderSkyView();
+  // Preview marker still needs to update with heading on the compass dial
   if (state.previewResult) {
     positionPreviewMarker();
   }
@@ -692,36 +691,15 @@ function renderSkyView(){
   if (dayLenEl) dayLenEl.textContent = `${dayHrs} hrs ${dayMins} mins`;
 
   // --- Compute arc horizontal positions (azimuth-relative) ---
-  // The arc spans from sunrise azimuth to sunset azimuth.
-  // Solar noon azimuth determines the arc peak's horizontal center.
-  // All positions are relative to current compass heading.
-  const heading = state.heading ?? 0;
-  const fovH = 100; // degrees of azimuth visible across the full panel width
-
-  function azToX(az){
-    const delta = ((az - heading + 540) % 360) - 180;
-    return 50 + (delta / fovH) * 100; // maps to 0–100 viewBox x-coords
-  }
-
-  // Compute solar noon azimuth from the midpoint between sunrise/sunset time
-  const noonTime = new Date((state.today.sunrise.getTime() + state.today.sunset.getTime()) / 2);
-  let noonAz, noonPos;
-  if (typeof SunCalc !== 'undefined' && state.lat !== null) {
-    noonPos = SunCalc.getPosition(noonTime, state.lat, state.lon);
-    noonAz = azToCompassBearing(noonPos.azimuth);
-  } else {
-    noonAz = (state.today.sunriseAz + state.today.sunsetAz) / 2;
-  }
-
-  const xRise = azToX(state.today.sunriseAz);
-  const xSet  = azToX(state.today.sunsetAz);
-  const xNoon = azToX(noonAz);
-
-  // Fixed y positions in the 100×60 viewBox
+  // --- Static arc: sunrise always left, sunset always right ---
+  // No compass heading involved — this panel is a fixed time-based
+  // diagram, not an azimuth-relative compass view.
+  const xRise    = 8;   // fixed left endpoint
+  const xSet     = 92;  // fixed right endpoint
   const yHorizon = 42;
   const yPeak    = 10;
 
-  // Update horizon line x range
+  // Horizon line is always full width, static
   const horizonEl = document.getElementById('skyHorizon');
   if (horizonEl){
     horizonEl.setAttribute('x1', '0');
@@ -730,44 +708,26 @@ function renderSkyView(){
     horizonEl.setAttribute('y2', yHorizon);
   }
 
-  // --- Draw main arc as cubic bezier ---
-  // Control points pull toward the peak at xNoon, yPeak
-  // giving a smooth natural-looking arc between the two endpoints.
+  // --- Draw main arc as cubic bezier (always sunrise left → sunset right) ---
   const arcPath = document.getElementById('skyArcPath');
   if (arcPath){
     arcPath.setAttribute('d',
-      `M ${xRise.toFixed(1)},${yHorizon} ` +
-      `C ${xRise.toFixed(1)},${yPeak} ` +
-      `${xSet.toFixed(1)},${yPeak} ` +
-      `${xSet.toFixed(1)},${yHorizon}`
+      `M ${xRise},${yHorizon} C ${xRise},${yPeak} ${xSet},${yPeak} ${xSet},${yHorizon}`
     );
-    // Clip visibility: only show if endpoints are near the panel
-    arcPath.style.display = (xRise > -30 && xSet < 130) ? '' : 'none';
+    arcPath.style.display = '';
   }
 
-  // --- Below-horizon tails (faded dashed extension) ---
+  // --- Below-horizon tails ---
   const tailLeft  = document.getElementById('skyTailLeft');
   const tailRight = document.getElementById('skyTailRight');
-  if (tailLeft){
-    tailLeft.setAttribute('d', `M ${(xRise-12).toFixed(1)},${(yHorizon+6).toFixed(1)} L ${xRise.toFixed(1)},${yHorizon}`);
-  }
-  if (tailRight){
-    tailRight.setAttribute('d', `M ${xSet.toFixed(1)},${yHorizon} L ${(xSet+12).toFixed(1)},${(yHorizon+6).toFixed(1)}`);
-  }
+  if (tailLeft)  tailLeft.setAttribute('d',  `M ${xRise-12},${yHorizon+6} L ${xRise},${yHorizon}`);
+  if (tailRight) tailRight.setAttribute('d', `M ${xSet},${yHorizon} L ${xSet+12},${yHorizon+6}`);
 
-  // --- Endpoint markers ---
+  // --- Endpoint markers — always visible at fixed positions ---
   const riseMarker = document.getElementById('skyRiseMarker');
   const setMarker  = document.getElementById('skySetMarker');
-  if (riseMarker){
-    riseMarker.setAttribute('cx', xRise.toFixed(1));
-    riseMarker.setAttribute('cy', yHorizon);
-    riseMarker.style.display = (xRise > -5 && xRise < 105) ? '' : 'none';
-  }
-  if (setMarker){
-    setMarker.setAttribute('cx', xSet.toFixed(1));
-    setMarker.setAttribute('cy', yHorizon);
-    setMarker.style.display = (xSet > -5 && xSet < 105) ? '' : 'none';
-  }
+  if (riseMarker){ riseMarker.setAttribute('cx', xRise); riseMarker.setAttribute('cy', yHorizon); riseMarker.style.display = ''; }
+  if (setMarker){  setMarker.setAttribute('cx', xSet);  setMarker.setAttribute('cy', yHorizon); setMarker.style.display = ''; }
 
   // --- Sun dot: position on arc by real time-of-day progress ---
   const sunDot = document.getElementById('skySunDot');
