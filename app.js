@@ -687,7 +687,7 @@ function renderSkyView(){
   }
 
   const { azimuth, altitudeDeg, dateTime } = state.previewResult;
-  view.style.background = skyGradientForAltitude(altitudeDeg);
+  // Sky background is now static (defined in CSS) — not driven by altitude.
 
   const heading = state.heading ?? 0;
   const fov = 100;
@@ -847,7 +847,7 @@ function renderPreviewAR(){
   }
 
   if (skyBg) {
-    skyBg.style.background = skyGradientForAltitude(state.previewResult.altitudeDeg);
+    // AR background is now static (defined in CSS) — not driven by altitude.
   }
 
   const heading = state.heading ?? 0;
