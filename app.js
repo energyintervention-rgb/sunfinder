@@ -195,6 +195,7 @@ function renderToday(){
   document.getElementById('sunsetAz').textContent = 'Az ' + fmtAz(state.today.sunsetAz);
   document.getElementById('sunriseAzLabel').textContent = fmtAz(state.today.sunriseAz);
   document.getElementById('sunsetAzLabel').textContent = fmtAz(state.today.sunsetAz);
+  renderSkyView();
 }
 
 // ---------- 7-day forecast (computed locally, no network needed) ----------
@@ -267,10 +268,9 @@ function positionMarkers(){
   document.getElementById('sunsetMarker').querySelector('.dot-ring').style.transform =
     `translate(-65px,-148px) rotate(${-sunsetAngle}deg)`;
 
-  // Redraw the sky panel path arc when heading changes — the arc shifts
-  // horizontally with compass heading just like the sun dot does.
+  // Redraw the sky panel arc when heading changes
+  renderSkyView();
   if (state.previewResult) {
-    drawSkyPath('skyPathLine', state.previewResult.dateTime, 'sky');
     positionPreviewMarker();
   }
 }
@@ -668,53 +668,143 @@ function computePreview(dateInputId, timeInputId, resultElId){
   renderPreviewAR();
 }
 
-// Renders the Home screen's dedicated sky panel: gradient backdrop
-// (by altitude) + a glowing sun positioned by azimuth (relative to
-// current heading, left-right) and altitude (up-down).
+// Renders the Home screen sky panel with the reference-style arc:
+// smooth cubic bezier curve with gradient stroke (orange→red→purple),
+// endpoint circle markers on the horizon, a sun dot positioned on the
+// arc by current time-of-day progress, and day length text.
+// The arc's horizontal position shifts with compass heading (azimuth-
+// relative), same as the original design but now drawn as a proper curve.
 function renderSkyView(){
-  const view = document.getElementById('skyView');
-  const sun = document.getElementById('skySun');
-  const glow = document.getElementById('skySunGlow');
-  const readout = document.getElementById('skyReadout');
-  if (!view) return;
+  if (!state.today) return;
 
-  if (!state.previewResult) {
-    readout.textContent = 'Pick a date and time to preview the sky.';
-    sun.style.display = 'none';
-    glow.style.display = 'none';
-    drawSkyPath('skyPathLine', null, 'sky'); // clear the path
-    return;
+  const readout = document.getElementById('skyReadout');
+
+  // --- Update time labels and day length ---
+  const riseLabel = document.getElementById('skyRiseLabel');
+  const setLabel  = document.getElementById('skySetLabel');
+  const dayLenEl  = document.getElementById('skyDayLength');
+  if (riseLabel) riseLabel.textContent = fmtTime(state.today.sunrise);
+  if (setLabel)  setLabel.textContent  = fmtTime(state.today.sunset);
+
+  const dayMs = state.today.sunset - state.today.sunrise;
+  const dayHrs = Math.floor(dayMs / 3600000);
+  const dayMins = Math.round((dayMs % 3600000) / 60000);
+  if (dayLenEl) dayLenEl.textContent = `${dayHrs} hrs ${dayMins} mins`;
+
+  // --- Compute arc horizontal positions (azimuth-relative) ---
+  // The arc spans from sunrise azimuth to sunset azimuth.
+  // Solar noon azimuth determines the arc peak's horizontal center.
+  // All positions are relative to current compass heading.
+  const heading = state.heading ?? 0;
+  const fovH = 100; // degrees of azimuth visible across the full panel width
+
+  function azToX(az){
+    const delta = ((az - heading + 540) % 360) - 180;
+    return 50 + (delta / fovH) * 100; // maps to 0–100 viewBox x-coords
   }
 
-  const { azimuth, altitudeDeg, dateTime } = state.previewResult;
-  // Sky background is now static (defined in CSS) — not driven by altitude.
+  // Compute solar noon azimuth from the midpoint between sunrise/sunset time
+  const noonTime = new Date((state.today.sunrise.getTime() + state.today.sunset.getTime()) / 2);
+  let noonAz, noonPos;
+  if (typeof SunCalc !== 'undefined' && state.lat !== null) {
+    noonPos = SunCalc.getPosition(noonTime, state.lat, state.lon);
+    noonAz = azToCompassBearing(noonPos.azimuth);
+  } else {
+    noonAz = (state.today.sunriseAz + state.today.sunsetAz) / 2;
+  }
 
-  const heading = state.heading ?? 0;
-  const fov = 100;
-  const delta = ((azimuth - heading + 540) % 360) - 180;
-  const leftPct = Math.max(-5, Math.min(105, 50 + (delta / fov) * 50));
+  const xRise = azToX(state.today.sunriseAz);
+  const xSet  = azToX(state.today.sunsetAz);
+  const xNoon = azToX(noonAz);
 
-  const horizonPct = 70;
-  const topPct = Math.max(6, horizonPct - (Math.max(0, altitudeDeg) / 90) * (horizonPct - 8));
-  const belowPct = Math.min(96, horizonPct + (Math.max(0, -altitudeDeg) / 30) * (96 - horizonPct));
-  const finalTopPct = altitudeDeg >= 0 ? topPct : belowPct;
+  // Fixed y positions in the 100×60 viewBox
+  const yHorizon = 42;
+  const yPeak    = 10;
 
-  const visible = leftPct >= -5 && leftPct <= 105;
-  sun.style.display = visible ? 'block' : 'none';
-  glow.style.display = (visible && altitudeDeg >= -2) ? 'block' : 'none';
-  sun.style.left = leftPct + '%';
-  sun.style.top = finalTopPct + '%';
-  glow.style.left = leftPct + '%';
-  glow.style.top = finalTopPct + '%';
-  sun.style.opacity = altitudeDeg < -2 ? '0.35' : '1';
+  // Update horizon line x range
+  const horizonEl = document.getElementById('skyHorizon');
+  if (horizonEl){
+    horizonEl.setAttribute('x1', '0');
+    horizonEl.setAttribute('x2', '100');
+    horizonEl.setAttribute('y1', yHorizon);
+    horizonEl.setAttribute('y2', yHorizon);
+  }
 
-  readout.textContent =
-    `${fmtTime(dateTime)} · Az ${fmtAz(azimuth)} · Alt ${altitudeDeg.toFixed(1)}°` +
-    (altitudeDeg < 0 ? ' (below horizon)' : '');
+  // --- Draw main arc as cubic bezier ---
+  // Control points pull toward the peak at xNoon, yPeak
+  // giving a smooth natural-looking arc between the two endpoints.
+  const arcPath = document.getElementById('skyArcPath');
+  if (arcPath){
+    arcPath.setAttribute('d',
+      `M ${xRise.toFixed(1)},${yHorizon} ` +
+      `C ${xRise.toFixed(1)},${yPeak} ` +
+      `${xSet.toFixed(1)},${yPeak} ` +
+      `${xSet.toFixed(1)},${yHorizon}`
+    );
+    // Clip visibility: only show if endpoints are near the panel
+    arcPath.style.display = (xRise > -30 && xSet < 130) ? '' : 'none';
+  }
 
-  // Draw the sun's path arc for the SELECTED date (matches the date picker)
-  drawSkyPath('skyPathLine', dateTime, 'sky');
+  // --- Below-horizon tails (faded dashed extension) ---
+  const tailLeft  = document.getElementById('skyTailLeft');
+  const tailRight = document.getElementById('skyTailRight');
+  if (tailLeft){
+    tailLeft.setAttribute('d', `M ${(xRise-12).toFixed(1)},${(yHorizon+6).toFixed(1)} L ${xRise.toFixed(1)},${yHorizon}`);
+  }
+  if (tailRight){
+    tailRight.setAttribute('d', `M ${xSet.toFixed(1)},${yHorizon} L ${(xSet+12).toFixed(1)},${(yHorizon+6).toFixed(1)}`);
+  }
+
+  // --- Endpoint markers ---
+  const riseMarker = document.getElementById('skyRiseMarker');
+  const setMarker  = document.getElementById('skySetMarker');
+  if (riseMarker){
+    riseMarker.setAttribute('cx', xRise.toFixed(1));
+    riseMarker.setAttribute('cy', yHorizon);
+    riseMarker.style.display = (xRise > -5 && xRise < 105) ? '' : 'none';
+  }
+  if (setMarker){
+    setMarker.setAttribute('cx', xSet.toFixed(1));
+    setMarker.setAttribute('cy', yHorizon);
+    setMarker.style.display = (xSet > -5 && xSet < 105) ? '' : 'none';
+  }
+
+  // --- Sun dot: position on arc by real time-of-day progress ---
+  const sunDot = document.getElementById('skySunDot');
+  if (sunDot){
+    const nowMs = Date.now();
+    const progress = Math.max(0, Math.min(1,
+      (nowMs - state.today.sunrise.getTime()) / dayMs
+    ));
+    const isDaytime = nowMs >= state.today.sunrise.getTime() && nowMs <= state.today.sunset.getTime();
+
+    if (isDaytime){
+      // Interpolate along the same cubic bezier as the arc
+      function cubicBezier(t, p0, p1, p2, p3){
+        const mt = 1-t;
+        return mt*mt*mt*p0 + 3*mt*mt*t*p1 + 3*mt*t*t*p2 + t*t*t*p3;
+      }
+      const dotX = cubicBezier(progress, xRise, xRise, xSet, xSet);
+      const dotY = cubicBezier(progress, yHorizon, yPeak, yPeak, yHorizon);
+      sunDot.setAttribute('cx', dotX.toFixed(1));
+      sunDot.setAttribute('cy', dotY.toFixed(1));
+      sunDot.style.display = '';
+    } else {
+      sunDot.style.display = 'none';
+    }
+  }
+
+  // --- Preview time readout (from date/time picker) ---
+  if (state.previewResult && readout){
+    const { azimuth, altitudeDeg, dateTime } = state.previewResult;
+    readout.textContent =
+      `${fmtTime(dateTime)} · Az ${fmtAz(azimuth)} · Alt ${altitudeDeg.toFixed(1)}°` +
+      (altitudeDeg < 0 ? ' (below horizon)' : '');
+  } else if (readout && !state.lat) {
+    readout.textContent = 'Set a location to see the sky.';
+  }
 }
+
 
 // =========================================================
 // Sun path arc — dashed line + arrowhead
