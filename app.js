@@ -754,8 +754,13 @@ function wirePreviewControls(dateId, timeId, resultId, nowBtnId){
 
   function setToNow(){
     const now = new Date();
-    dateInput.value = now.toISOString().slice(0,10);
-    timeInput.value = now.toTimeString().slice(0,5);
+    // Use local-time getters (not toISOString which returns UTC and would
+    // show yesterday's date for MYT users between midnight and 8am local).
+    const y = now.getFullYear();
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const d = String(now.getDate()).padStart(2,'0');
+    dateInput.value = `${y}-${m}-${d}`;
+    timeInput.value = now.toTimeString().slice(0,5); // toTimeString uses local time, this is correct
     computePreview(dateId, timeId, resultId);
   }
 
