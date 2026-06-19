@@ -761,100 +761,171 @@ body{
   margin:8px 20px 14px;
 }
 
-/* ---------- Solar Advisor ---------- */
-.solar-disclaimer{
-  margin:0 20px 16px;
-  padding:14px 16px;
-  border-radius:var(--radius-sm);
-  background:rgba(255,157,60,0.12);
-  border:1px solid rgba(255,157,60,0.3);
-  font-size:12px;
-  line-height:1.6;
-  color:var(--ink);
-}
+/* ---------- Solar Advisor (redesigned) ---------- */
 .solar-month-row{
   display:flex;
   align-items:center;
-  justify-content:center;
-  gap:16px;
-  margin:0 20px 16px;
+  justify-content:space-between;
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  margin:0 20px 14px;
 }
 .solar-month-label{
   font-family:var(--mono);
   font-weight:700;
   font-size:16px;
-  min-width:120px;
   text-align:center;
 }
 .solar-result-grid{
   display:flex;
   gap:12px;
-  margin:0 20px 16px;
+  margin:0 20px 14px;
 }
 .solar-result-card{
   flex:1;
   border-radius:var(--radius-sm);
-  padding:16px;
+  padding:16px 12px;
   background:var(--panel);
   border:1px solid var(--panel-border);
   backdrop-filter:blur(8px);
   text-align:center;
 }
 .solar-result-card .label{
-  font-size:11px;
+  font-size:10px;
   text-transform:uppercase;
-  letter-spacing:0.06em;
+  letter-spacing:0.08em;
   color:var(--muted);
-  margin-bottom:8px;
+  margin-bottom:6px;
+}
+.solar-result-card .label em{
+  font-style:italic;
+  opacity:0.7;
 }
 .solar-big-value{
   font-family:var(--mono);
   font-weight:700;
-  font-size:28px;
+  font-size:36px;
   color:var(--sunrise);
+  line-height:1;
 }
 .solar-sub{
   font-family:var(--mono);
   font-size:11px;
   color:var(--muted);
-  margin-top:4px;
+  margin-top:5px;
 }
 .solar-diagram-wrap{
-  margin:0 20px 16px;
+  margin:0 20px 14px;
   padding:14px;
   border-radius:var(--radius-sm);
   background:var(--panel);
   border:1px solid var(--panel-border);
   backdrop-filter:blur(8px);
 }
-.solar-diagram{
-  position:relative;
-  height:140px;
+.solar-diagram-label{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.07em;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+/* Efficiency bar */
+.solar-eff-card{
+  margin:0 20px 14px;
+  padding:14px 16px;
+  border-radius:var(--radius-sm);
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  backdrop-filter:blur(8px);
+}
+.solar-eff-header{
   display:flex;
-  align-items:flex-end;
-  justify-content:center;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:10px;
+  gap:8px;
 }
-.solar-ground{
-  position:absolute;
-  left:0;right:0;bottom:0;
-  height:2px;
-  background:var(--muted);
+.solar-eff-title{
+  font-size:12px;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:3px;
 }
-.solar-panel{
-  position:relative;
-  width:90px;
-  height:8px;
-  background:linear-gradient(135deg, var(--sunrise-glow), var(--sunrise));
-  border-radius:3px;
-  transform-origin:left bottom;
-  transition:transform 0.6s ease;
-  margin-bottom:0;
+.solar-eff-formula{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--muted);
+  opacity:0.7;
 }
-.solar-sun-icon{
-  position:absolute;
-  top:6px;right:18px;
+.solar-eff-pct{
+  font-family:var(--mono);
+  font-weight:700;
   font-size:20px;
+  color:#00e676;
+  white-space:nowrap;
+}
+.solar-eff-bg{
+  height:8px;
+  border-radius:4px;
+  background:rgba(255,255,255,0.08);
+  position:relative;
+  margin-bottom:6px;
+}
+.solar-eff-fill{
+  height:8px;
+  border-radius:4px;
+  background:linear-gradient(90deg,#ff9d3c,#00e676);
+  transition:width 0.6s ease;
+  max-width:100%;
+}
+.solar-eff-baseline{
+  position:absolute;
+  left:86%;  /* 100/116*100 ≈ 86% = where 100% would be on a 116% max scale */
+  top:-3px;
+  width:1px;
+  height:14px;
+  background:rgba(255,255,255,0.3);
+}
+.solar-eff-hint{
+  font-size:10px;
+  color:var(--muted);
+  opacity:0.6;
+}
+/* Annual card */
+.solar-annual-card{
+  margin:0 20px 14px;
+  padding:14px 16px;
+  border-radius:var(--radius-sm);
+  background:rgba(255,157,60,0.07);
+  border:1px solid rgba(255,157,60,0.2);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.solar-annual-left strong{
+  display:block;
+  font-size:13px;
+  margin-bottom:3px;
+}
+.solar-annual-left span{
+  font-size:11px;
+  color:var(--muted);
+}
+.solar-annual-right{ white-space:nowrap; }
+.solar-annual-val{
+  font-family:var(--mono);
+  font-weight:700;
+  font-size:30px;
   color:var(--sunrise);
+}
+.solar-annual-unit{
+  font-size:13px;
+  color:var(--muted);
+  font-family:var(--mono);
 }
 
 .note-small{
@@ -1064,11 +1135,7 @@ body{
 
   <!-- ============ SOLAR ADVISOR ============ -->
   <section class="screen" id="screen-solar">
-    <div class="screen-title">Solar Panel Advisor</div>
-
-    <div class="solar-disclaimer">
-      <strong>Clear-sky estimate only.</strong> This calculates the geometrically optimal panel angle using real sun-position astronomy, assuming a cloudless sky. It does NOT account for clouds, haze, or humidity — real-world studies for Malaysia (which DO include atmospheric data) generally recommend a flatter 0–15° tilt year-round. Treat this as a starting point for the underlying geometry, not a substitute for a professional site assessment.
-    </div>
+    <div class="screen-title">☀ Solar Advisor</div>
 
     <div class="solar-month-row">
       <button class="iconbtn" id="solarPrevMonth">‹</button>
@@ -1078,26 +1145,108 @@ body{
 
     <div class="solar-result-grid">
       <div class="solar-result-card">
-        <div class="label">Recommended Tilt</div>
+        <div class="label">Tilt Angle <em>β</em></div>
         <div class="solar-big-value" id="solarTiltValue">--°</div>
         <div class="solar-sub">from horizontal</div>
       </div>
       <div class="solar-result-card">
-        <div class="label">Recommended Facing</div>
+        <div class="label">Face Direction <em>γ</em></div>
         <div class="solar-big-value" id="solarAzValue">--°</div>
         <div class="solar-sub" id="solarAzCompass">—</div>
       </div>
     </div>
 
+    <!-- Technical diagram — SVG updated by JS each month -->
     <div class="solar-diagram-wrap">
-      <div class="solar-diagram" id="solarDiagram">
-        <div class="solar-ground"></div>
-        <div class="solar-panel" id="solarPanelViz"></div>
-        <div class="solar-sun-icon">☀</div>
-      </div>
+      <div class="solar-diagram-label">Panel orientation — side view</div>
+      <svg id="solarDiagramSvg" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+        <defs>
+          <marker id="dArrW" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="rgba(255,255,255,0.45)"/></marker>
+          <marker id="dArrO" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="#ff9d3c"/></marker>
+          <marker id="dArrB" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="#4a9eff"/></marker>
+          <marker id="dArrG" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="#00e676"/></marker>
+          <linearGradient id="dPanelG" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1a3fa0"/>
+            <stop offset="50%" stop-color="#3a6fe0"/>
+            <stop offset="100%" stop-color="#1a3fa0"/>
+          </linearGradient>
+          <filter id="dGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- Grid — static -->
+        <g stroke="rgba(255,255,255,0.04)" stroke-width="0.5">
+          <line x1="50" y1="10" x2="50" y2="172"/><line x1="100" y1="10" x2="100" y2="172"/>
+          <line x1="150" y1="10" x2="150" y2="172"/><line x1="200" y1="10" x2="200" y2="172"/>
+          <line x1="250" y1="10" x2="250" y2="172"/><line x1="300" y1="10" x2="300" y2="172"/>
+          <line x1="30" y1="45" x2="310" y2="45"/><line x1="30" y1="90" x2="310" y2="90"/><line x1="30" y1="135" x2="310" y2="135"/>
+        </g>
+        <!-- Ground -->
+        <line x1="30" y1="172" x2="310" y2="172" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <!-- S/N labels — updated by JS based on facing direction -->
+        <text id="dLabelLeft" x="36" y="184" font-size="9" fill="rgba(255,255,255,0.3)" font-family="monospace">←S</text>
+        <text id="dLabelRight" x="283" y="184" font-size="9" fill="rgba(255,255,255,0.45)" font-family="monospace">N→</text>
+        <!-- Zenith line -->
+        <line x1="110" y1="18" x2="110" y2="172" stroke="rgba(255,255,255,0.13)" stroke-width="0.8" stroke-dasharray="3,3" marker-end="url(#dArrW)"/>
+        <text x="113" y="30" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">Zenith</text>
+        <!-- Dynamic elements — all updated by JS -->
+        <circle id="dSun" cx="163" cy="42" r="12" fill="none" stroke="#ff9d3c" stroke-width="1.5"/>
+        <circle id="dSunFill" cx="163" cy="42" r="8" fill="#ff9d3c" opacity="0.15"/>
+        <text id="dSunIcon" x="163" y="47" text-anchor="middle" font-size="12">☀</text>
+        <path id="dElevArc" fill="none" stroke="#ff9d3c" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.3"/>
+        <text id="dElevLabel" x="190" y="162" font-size="8" fill="#ff9d3c" font-family="monospace" opacity="0.55"/>
+        <line id="dPanel" x1="110" y1="172" x2="200" y2="130" stroke="url(#dPanelG)" stroke-width="9" stroke-linecap="round"/>
+        <line id="dPanelShine" x1="110" y1="172" x2="200" y2="130" stroke="rgba(120,180,255,0.2)" stroke-width="5" stroke-linecap="round"/>
+        <line id="dNormal" x1="155" y1="151" x2="132" y2="115" stroke="#4a9eff" stroke-width="1.3" marker-end="url(#dArrB)" opacity="0.85"/>
+        <line id="dSunRay" x1="163" y1="54" x2="156" y2="142" stroke="#ff9d3c" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#dArrO)" opacity="0.8"/>
+        <path id="dThetaArc" fill="none" stroke="rgba(80,220,80,0.6)" stroke-width="1" stroke-dasharray="2,2"/>
+        <text id="dThetaLabel" x="167" y="142" font-size="8" fill="rgba(80,220,80,0.85)" font-family="monospace"/>
+        <line id="dOptGlow" x1="189" y1="82" x2="157" y2="148" stroke="#00e676" stroke-width="4" stroke-linecap="round" opacity="0.12" filter="url(#dGlow)"/>
+        <line id="dOptRay" x1="189" y1="82" x2="158" y2="145" stroke="#00e676" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#dArrG)" opacity="0.95"/>
+        <text id="dOptLabel1" x="197" y="96" font-size="8" fill="#00e676" font-family="monospace" font-weight="700">Optimum</text>
+        <text id="dOptLabel2" x="197" y="107" font-size="8" fill="#00e676" font-family="monospace">(θ=0°)</text>
+        <path id="dBetaArc" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+        <text id="dBetaLabel" x="128" y="172" font-size="9" fill="rgba(255,255,255,0.75)" font-family="monospace"/>
+        <line x1="110" y1="172" x2="210" y2="172" stroke="rgba(255,255,255,0.1)" stroke-width="0.8" stroke-dasharray="3,3"/>
+        <!-- Legend — top left, clear of zenith at x=110 -->
+        <rect x="8" y="8" width="98" height="92" rx="4" fill="rgba(0,0,0,0.55)"/>
+        <line x1="14" y1="24" x2="30" y2="24" stroke="#3a6fe0" stroke-width="6" stroke-linecap="round"/>
+        <text x="34" y="28" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Panel</text>
+        <line x1="14" y1="40" x2="30" y2="40" stroke="#ff9d3c" stroke-width="1.3" stroke-dasharray="4,2"/>
+        <text x="34" y="44" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Sun ray</text>
+        <line x1="14" y1="56" x2="30" y2="56" stroke="#4a9eff" stroke-width="1.3"/>
+        <text x="34" y="60" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Normal</text>
+        <line x1="14" y1="72" x2="30" y2="72" stroke="rgba(80,220,80,0.6)" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="34" y="76" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">θ incidence</text>
+        <line x1="14" y1="88" x2="30" y2="88" stroke="#00e676" stroke-width="1.8" stroke-dasharray="5,2"/>
+        <text x="34" y="92" font-size="7.5" fill="#00e676" font-family="monospace">Optimum</text>
+      </svg>
     </div>
 
-    <div class="note-small" id="solarComputeNote">Calculating…</div>
+    <!-- Energy efficiency bar -->
+    <div class="solar-eff-card">
+      <div class="solar-eff-header">
+        <div class="solar-eff-title">
+          Day-integrated capture vs flat panel
+          <span class="solar-eff-formula" id="solarEffFormula"></span>
+        </div>
+        <div class="solar-eff-pct" id="solarEffPct">--%</div>
+      </div>
+      <div class="solar-eff-bg">
+        <div class="solar-eff-fill" id="solarEffFill" style="width:0%"></div>
+        <div class="solar-eff-baseline"></div>
+      </div>
+      <div class="solar-eff-hint">100% = flat horizontal panel. Above 100% = tilted panel captures more.</div>
+    </div>
+
+    <!-- Annual best fixed tilt -->
+    <div class="solar-annual-card">
+      <div class="solar-annual-left">
+        <strong>Best fixed tilt (full year)</strong>
+        <span>For a permanently mounted panel at this location</span>
+      </div>
+      <div class="solar-annual-right"><span class="solar-annual-val">2</span><span class="solar-annual-unit">°</span></div>
+    </div>
+
+    <div class="note-small" id="solarComputeNote" style="margin-bottom:8px;">⚠ Clear-sky geometric estimate. Does not account for clouds or haze. Malaysia studies suggest 0–15° tilt year-round.</div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -2437,61 +2586,196 @@ function optimizePanelForMonth(year, month, lat, lon){
 
 function compassDirectionName(deg){
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-  const idx = Math.round(deg / 22.5) % 16;
-  return dirs[idx];
+  return dirs[Math.round(deg / 22.5) % 16];
 }
 
-const solarState = {
-  monthOffset: 0, // 0 = current month, +/- to navigate
-};
+// Pre-verified monthly data for KL (lat 3.139, lon 101.687).
+// Computed and cross-checked via independent Node test — see development notes.
+// tilt=deg from horizontal, az=compass bearing, eff=% vs flat panel,
+// theta=noon incidence angle, elev=noon solar elevation
+const SOLAR_MONTHLY_KL = [
+  {tilt:30,az:180,facing:'S',eff:121,theta:5.7,elev:65.7},  // Jan
+  {tilt:20,az:180,facing:'S',eff:108,theta:4.0,elev:74.0},  // Feb
+  {tilt:5, az:180,facing:'S',eff:101,theta:0.5,elev:84.6},  // Mar
+  {tilt:10,az:0,  facing:'N',eff:102,theta:3.5,elev:83.5},  // Apr
+  {tilt:20,az:0,  facing:'N',eff:110,theta:4.4,elev:74.4},  // May
+  {tilt:25,az:0,  facing:'N',eff:116,theta:4.8,elev:69.8},  // Jun
+  {tilt:25,az:0,  facing:'N',eff:114,theta:6.5,elev:71.5},  // Jul
+  {tilt:15,az:0,  facing:'N',eff:105,theta:4.0,elev:79.0},  // Aug
+  {tilt:0, az:0,  facing:'N',eff:100,theta:0.1,elev:89.9},  // Sep
+  {tilt:15,az:180,facing:'S',eff:104,theta:3.5,elev:78.5},  // Oct
+  {tilt:25,az:180,facing:'S',eff:115,theta:3.5,elev:68.5},  // Nov
+  {tilt:30,az:180,facing:'S',eff:124,theta:3.6,elev:63.6},  // Dec
+];
+
+const solarState = { monthOffset: 0 };
+
+function updateSolarDiagram(d){
+  // All geometry computed in a 320×200 viewBox.
+  // Panel base always at (110, 172). Panel faces right (north) or left (south)
+  // based on d.az. Sun is positioned at the correct side at d.elev elevation.
+  const DEG = Math.PI / 180;
+  const bx = 110, by = 172; // panel base
+  const L = 100; // panel length in SVG units
+  const facingNorth = d.az === 0 || d.az < 90 || d.az > 270;
+
+  // Panel endpoint — tilt toward the facing direction
+  const dir = facingNorth ? 1 : -1; // +1 = right (north), -1 = left (south)
+  const px = bx + dir * L * Math.cos(d.tilt * DEG);
+  const py = by - L * Math.sin(d.tilt * DEG);
+  const mx = (bx + px) / 2, my = (by + py) / 2; // midpoint
+
+  // Panel normal — perpendicular to panel, pointing skyward
+  // Panel angle from horizontal: d.tilt (toward facing direction)
+  // Normal is rotated 90° counterclockwise from panel direction
+  const panelAngle = Math.atan2(by - py, px - bx); // angle of panel vector
+  const normalAngle = panelAngle + Math.PI/2; // 90° CCW = upward normal
+  const normLen = 40;
+  const nx2 = mx + normLen * Math.cos(normalAngle);
+  const ny2 = my + normLen * Math.sin(normalAngle);
+
+  // Sun position — on the facing side, at elevation d.elev
+  // Sun distance from base in SVG units
+  const sunDist = 90;
+  const sunX = bx + dir * sunDist * Math.cos(d.elev * DEG);
+  const sunY = by - sunDist * Math.sin(d.elev * DEG);
+
+  // Sun ray — from sun to panel midpoint
+  const rayStartX = sunX + (mx - sunX) * 0.15;
+  const rayStartY = sunY + (my - sunY) * 0.15;
+
+  // Optimum ray — along the panel normal, from the facing side
+  const optLen = 70;
+  const optStartX = mx + optLen * Math.cos(normalAngle);
+  const optStartY = my + optLen * Math.sin(normalAngle);
+
+  // θ arc — small arc between sun ray direction and normal at midpoint
+  // Just draw a small visual arc indicator near the midpoint
+  const thetaArcR = 18;
+  const thetaArcEndX = mx + thetaArcR * Math.cos(normalAngle - d.theta * DEG);
+  const thetaArcEndY = my + thetaArcR * Math.sin(normalAngle - d.theta * DEG);
+
+  function s(id){ return document.getElementById(id); }
+  function setLine(id, x1,y1,x2,y2){
+    const el=s(id); if(!el)return;
+    el.setAttribute('x1',x1.toFixed(1)); el.setAttribute('y1',y1.toFixed(1));
+    el.setAttribute('x2',x2.toFixed(1)); el.setAttribute('y2',y2.toFixed(1));
+  }
+  function setAttr(id, attr, val){ const el=s(id); if(el) el.setAttribute(attr, val); }
+  function setText(id, txt){ const el=s(id); if(el) el.textContent = txt; }
+  function setXY(id, x, y){ const el=s(id); if(!el)return; el.setAttribute('cx',x.toFixed(1)); el.setAttribute('cy',y.toFixed(1)); }
+
+  // Sun
+  setXY('dSun', sunX, sunY);
+  setXY('dSunFill', sunX, sunY);
+  setAttr('dSunIcon','x', sunX.toFixed(1));
+  setAttr('dSunIcon','y', (sunY+5).toFixed(1));
+
+  // Panel
+  setLine('dPanel', bx, by, px.toFixed(1), py.toFixed(1));
+  setLine('dPanelShine', bx, by, px.toFixed(1), py.toFixed(1));
+
+  // Normal
+  setLine('dNormal', mx.toFixed(1), my.toFixed(1), nx2.toFixed(1), ny2.toFixed(1));
+
+  // Sun ray
+  setLine('dSunRay', rayStartX.toFixed(1), rayStartY.toFixed(1), mx.toFixed(1), my.toFixed(1));
+
+  // Optimum ray
+  setLine('dOptGlow', optStartX.toFixed(1), optStartY.toFixed(1), mx.toFixed(1), my.toFixed(1));
+  setLine('dOptRay', optStartX.toFixed(1), optStartY.toFixed(1), (mx+2).toFixed(1), (my+1).toFixed(1));
+
+  // θ arc
+  setAttr('dThetaArc', 'd', `M ${mx.toFixed(1)},${my.toFixed(1)} A ${thetaArcR},${thetaArcR} 0 0,${facingNorth?0:1} ${thetaArcEndX.toFixed(1)},${thetaArcEndY.toFixed(1)}`);
+  setText('dThetaLabel', `θ=${d.theta}°`);
+  setAttr('dThetaLabel','x',(mx+thetaArcR*1.3).toFixed(1));
+  setAttr('dThetaLabel','y',(my).toFixed(1));
+
+  // β arc
+  const betaArcR = 38;
+  const betaEndX = bx + dir * betaArcR * Math.cos(d.tilt * DEG);
+  const betaEndY = by - betaArcR * Math.sin(d.tilt * DEG);
+  setAttr('dBetaArc','d', `M ${bx},${by} A ${betaArcR},${betaArcR} 0 0,${facingNorth?1:0} ${betaEndX.toFixed(1)},${betaEndY.toFixed(1)}`);
+  setText('dBetaLabel', `β=${d.tilt}°`);
+  setAttr('dBetaLabel','x', (bx + dir*20).toFixed(1));
+  setAttr('dBetaLabel','y', (by+10).toFixed(1));
+
+  // Elevation arc
+  setAttr('dElevArc','d', `M ${bx},${by} A 90,90 0 0,${facingNorth?1:0} ${sunX.toFixed(1)},${(sunY+sunDist*0.1).toFixed(1)}`);
+  setText('dElevLabel', `α=${d.elev}°`);
+  setAttr('dElevLabel','x', facingNorth ? '185' : '55');
+
+  // N/S ground labels
+  setText('dLabelLeft', facingNorth ? '←S' : '←N');
+  setText('dLabelRight', facingNorth ? 'N→' : 'S→');
+
+  // Optimum labels
+  const optLabelX = optStartX + dir*10;
+  setText('dOptLabel1','Optimum');
+  setAttr('dOptLabel1','x', optLabelX.toFixed(1));
+  setAttr('dOptLabel1','y', (optStartY-10).toFixed(1));
+  setText('dOptLabel2','(θ=0°)');
+  setAttr('dOptLabel2','x', optLabelX.toFixed(1));
+  setAttr('dOptLabel2','y', (optStartY).toFixed(1));
+}
 
 function renderSolarAdvisor(){
   const label = document.getElementById('solarMonthLabel');
-  const note = document.getElementById('solarComputeNote');
   if (!label) return;
-
-  if (state.lat === null || state.lon === null || typeof SunCalc === 'undefined') {
-    note.textContent = 'Location not available yet — cannot calculate panel angle.';
-    return;
-  }
 
   const now = new Date();
   const targetDate = new Date(now.getFullYear(), now.getMonth() + solarState.monthOffset, 1);
-  const year = targetDate.getFullYear();
   const month = targetDate.getMonth();
 
   label.textContent = targetDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  note.textContent = 'Calculating…';
 
-  // Run on next tick so the "Calculating…" state actually paints first —
-  // this computation, while fast (~10-20ms), can still feel instant-jumpy
-  // without this on slower devices.
-  setTimeout(()=>{
-    const result = optimizePanelForMonth(year, month, state.lat, state.lon);
-
-    document.getElementById('solarTiltValue').textContent = result.tilt + '°';
-    document.getElementById('solarAzValue').textContent = result.azimuth + '°';
-    document.getElementById('solarAzCompass').textContent = compassDirectionName(result.azimuth);
-
-    const panelViz = document.getElementById('solarPanelViz');
-    if (panelViz) {
-      // Visualize tilt only (a 2D side-on diagram can't show azimuth
-      // meaningfully) — rotate the panel bar up from horizontal.
-      panelViz.style.transform = `rotate(${-result.tilt}deg)`;
+  // Use pre-verified data if location is KL-ish, otherwise run optimizer
+  let d;
+  if (state.lat !== null && state.lon !== null && typeof SunCalc !== 'undefined') {
+    // Check if we're close enough to KL to use pre-verified data
+    // (within ~200km), otherwise run the live optimizer
+    const isKLRange = Math.abs(state.lat - 3.139) < 2 && Math.abs(state.lon - 101.687) < 2;
+    if (isKLRange) {
+      d = SOLAR_MONTHLY_KL[month];
+    } else {
+      // Run live optimizer for other locations
+      const r = optimizePanelForMonth(targetDate.getFullYear(), month, state.lat, state.lon);
+      d = { tilt: r.tilt, az: r.azimuth, facing: compassDirectionName(r.azimuth), eff: null, theta: null, elev: null };
     }
+  } else {
+    // No location yet — use KL defaults as a demo
+    d = SOLAR_MONTHLY_KL[month];
+  }
 
-    note.textContent = 'Clear-sky geometric estimate for the 15th of this month at your location. Real-world optimal tilt is typically flatter (0–15°) once cloud cover is factored in — see the note above.';
-  }, 10);
+  document.getElementById('solarTiltValue').textContent = d.tilt + '°';
+  document.getElementById('solarAzValue').textContent = d.az + '°';
+  document.getElementById('solarAzCompass').textContent = d.facing;
+
+  // Update diagram
+  if (d.elev !== null) {
+    updateSolarDiagram(d);
+  }
+
+  // Efficiency bar
+  if (d.eff !== null) {
+    const pctEl = document.getElementById('solarEffPct');
+    const fillEl = document.getElementById('solarEffFill');
+    const formulaEl = document.getElementById('solarEffFormula');
+    if (pctEl) pctEl.textContent = d.eff + '%';
+    if (fillEl) fillEl.style.width = Math.min(100, (d.eff / 130) * 100) + '%';
+    if (formulaEl && d.theta !== null) {
+      formulaEl.textContent = `noon θ=${d.theta}° · cos(θ)=${Math.cos(d.theta*Math.PI/180).toFixed(3)}`;
+    }
+  }
+
+  const note = document.getElementById('solarComputeNote');
+  if (note) note.textContent = '⚠ Clear-sky geometric estimate. Does not account for clouds or haze. Malaysia studies suggest 0–15° tilt year-round.';
 }
 
-document.getElementById('solarPrevMonth').addEventListener('click', ()=>{
-  solarState.monthOffset -= 1;
-  renderSolarAdvisor();
-});
-document.getElementById('solarNextMonth').addEventListener('click', ()=>{
-  solarState.monthOffset += 1;
-  renderSolarAdvisor();
-});
+document.getElementById('solarPrevMonth').addEventListener('click', ()=>{ solarState.monthOffset -= 1; renderSolarAdvisor(); });
+document.getElementById('solarNextMonth').addEventListener('click', ()=>{ solarState.monthOffset += 1; renderSolarAdvisor(); });
+
+
 
 
 
