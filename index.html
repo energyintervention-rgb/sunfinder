@@ -1160,10 +1160,23 @@ body{
     <!-- Technical diagram — SVG updated by JS each month -->
     <div class="solar-diagram-wrap">
       <div class="solar-diagram-label">Panel orientation — side view</div>
-      <svg id="solarDiagramSvg" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+      <svg id="solarDiagramSvg" viewBox="0 0 320 185" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
         <defs>
+          <!-- Real sun gradients -->
+          <radialGradient id="dSunGrad" cx="38%" cy="35%" r="55%">
+            <stop offset="0%" stop-color="#fff7d6"/>
+            <stop offset="30%" stop-color="#ffe566"/>
+            <stop offset="65%" stop-color="#ffaa00"/>
+            <stop offset="100%" stop-color="#ff6600" stop-opacity="0.9"/>
+          </radialGradient>
+          <radialGradient id="dGlowGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffaa00" stop-opacity="0.55"/>
+            <stop offset="60%" stop-color="#ffaa00" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#ffaa00" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Markers -->
           <marker id="dArrW" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="rgba(255,255,255,0.45)"/></marker>
-          <marker id="dArrO" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="#ff9d3c"/></marker>
+          <marker id="dArrO" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#ff9d3c"/></marker>
           <marker id="dArrB" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="#4a9eff"/></marker>
           <marker id="dArrG" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" fill="#00e676"/></marker>
           <linearGradient id="dPanelG" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1171,54 +1184,71 @@ body{
             <stop offset="50%" stop-color="#3a6fe0"/>
             <stop offset="100%" stop-color="#1a3fa0"/>
           </linearGradient>
-          <filter id="dGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="dGlowF"><feGaussianBlur stdDeviation="4"/></filter>
+          <filter id="dGreenGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="dCoronaBlur"><feGaussianBlur stdDeviation="0.8"/></filter>
         </defs>
-        <!-- Grid — static -->
+
+        <!-- Grid -->
         <g stroke="rgba(255,255,255,0.04)" stroke-width="0.5">
-          <line x1="50" y1="10" x2="50" y2="172"/><line x1="100" y1="10" x2="100" y2="172"/>
-          <line x1="150" y1="10" x2="150" y2="172"/><line x1="200" y1="10" x2="200" y2="172"/>
-          <line x1="250" y1="10" x2="250" y2="172"/><line x1="300" y1="10" x2="300" y2="172"/>
-          <line x1="30" y1="45" x2="310" y2="45"/><line x1="30" y1="90" x2="310" y2="90"/><line x1="30" y1="135" x2="310" y2="135"/>
+          <line x1="80" y1="8" x2="80" y2="168"/><line x1="160" y1="8" x2="160" y2="168"/>
+          <line x1="240" y1="8" x2="240" y2="168"/>
+          <line x1="30" y1="55" x2="310" y2="55"/><line x1="30" y1="110" x2="310" y2="110"/>
         </g>
+
         <!-- Ground -->
-        <line x1="30" y1="172" x2="310" y2="172" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-        <!-- S/N labels — updated by JS based on facing direction -->
-        <text id="dLabelLeft" x="36" y="184" font-size="9" fill="rgba(255,255,255,0.3)" font-family="monospace">←S</text>
-        <text id="dLabelRight" x="283" y="184" font-size="9" fill="rgba(255,255,255,0.45)" font-family="monospace">N→</text>
-        <!-- Zenith line -->
-        <line x1="110" y1="18" x2="110" y2="172" stroke="rgba(255,255,255,0.13)" stroke-width="0.8" stroke-dasharray="3,3" marker-end="url(#dArrW)"/>
-        <text x="113" y="30" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">Zenith</text>
-        <!-- Dynamic elements — all updated by JS -->
-        <circle id="dSun" cx="163" cy="42" r="12" fill="none" stroke="#ff9d3c" stroke-width="1.5"/>
-        <circle id="dSunFill" cx="163" cy="42" r="8" fill="#ff9d3c" opacity="0.15"/>
-        <text id="dSunIcon" x="163" y="47" text-anchor="middle" font-size="12">☀</text>
-        <path id="dElevArc" fill="none" stroke="#ff9d3c" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.3"/>
-        <text id="dElevLabel" x="190" y="162" font-size="8" fill="#ff9d3c" font-family="monospace" opacity="0.55"/>
-        <line id="dPanel" x1="110" y1="172" x2="200" y2="130" stroke="url(#dPanelG)" stroke-width="9" stroke-linecap="round"/>
-        <line id="dPanelShine" x1="110" y1="172" x2="200" y2="130" stroke="rgba(120,180,255,0.2)" stroke-width="5" stroke-linecap="round"/>
-        <line id="dNormal" x1="155" y1="151" x2="132" y2="115" stroke="#4a9eff" stroke-width="1.3" marker-end="url(#dArrB)" opacity="0.85"/>
-        <line id="dSunRay" x1="163" y1="54" x2="156" y2="142" stroke="#ff9d3c" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#dArrO)" opacity="0.8"/>
-        <path id="dThetaArc" fill="none" stroke="rgba(80,220,80,0.6)" stroke-width="1" stroke-dasharray="2,2"/>
-        <text id="dThetaLabel" x="167" y="142" font-size="8" fill="rgba(80,220,80,0.85)" font-family="monospace"/>
-        <line id="dOptGlow" x1="189" y1="82" x2="157" y2="148" stroke="#00e676" stroke-width="4" stroke-linecap="round" opacity="0.12" filter="url(#dGlow)"/>
-        <line id="dOptRay" x1="189" y1="82" x2="158" y2="145" stroke="#00e676" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#dArrG)" opacity="0.95"/>
-        <text id="dOptLabel1" x="197" y="96" font-size="8" fill="#00e676" font-family="monospace" font-weight="700">Optimum</text>
-        <text id="dOptLabel2" x="197" y="107" font-size="8" fill="#00e676" font-family="monospace">(θ=0°)</text>
+        <line x1="30" y1="168" x2="310" y2="168" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text id="dLabelLeft"  x="36"  y="180" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">←S</text>
+        <text id="dLabelRight" x="282" y="180" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">N→</text>
+
+        <!-- Zenith — fixed at x=160 center -->
+        <line x1="160" y1="10" x2="160" y2="168" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" stroke-dasharray="3,3" marker-end="url(#dArrW)"/>
+        <text x="163" y="22" font-size="7.5" fill="rgba(255,255,255,0.3)" font-family="monospace">Zenith</text>
+
+        <!-- Dynamic elements updated by JS -->
+
+        <!-- Panel -->
+        <line id="dPanel"      stroke="url(#dPanelG)"          stroke-width="9"   stroke-linecap="round"/>
+        <line id="dPanelShine" stroke="rgba(120,180,255,0.2)"  stroke-width="5"   stroke-linecap="round"/>
+
+        <!-- Normal arrow -->
+        <line id="dNormal" stroke="#4a9eff" stroke-width="1.5" marker-end="url(#dArrB)" opacity="0.9"/>
+
+        <!-- Sun ray — orange dashed -->
+        <line id="dSunRay" stroke="#ff9d3c" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#dArrO)" opacity="0.9"/>
+
+        <!-- Optimum ray — green -->
+        <line id="dOptGlow" stroke="#00e676" stroke-width="4" opacity="0.12" filter="url(#dGreenGlow)"/>
+        <line id="dOptRay"  stroke="#00e676" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#dArrG)" opacity="0.95" filter="url(#dGreenGlow)"/>
+
+        <!-- β arc and label -->
         <path id="dBetaArc" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-        <text id="dBetaLabel" x="128" y="172" font-size="9" fill="rgba(255,255,255,0.75)" font-family="monospace"/>
-        <line x1="110" y1="172" x2="210" y2="172" stroke="rgba(255,255,255,0.1)" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <!-- Legend — top left, clear of zenith at x=110 -->
-        <rect x="8" y="8" width="98" height="92" rx="4" fill="rgba(0,0,0,0.55)"/>
-        <line x1="14" y1="24" x2="30" y2="24" stroke="#3a6fe0" stroke-width="6" stroke-linecap="round"/>
-        <text x="34" y="28" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Panel</text>
-        <line x1="14" y1="40" x2="30" y2="40" stroke="#ff9d3c" stroke-width="1.3" stroke-dasharray="4,2"/>
-        <text x="34" y="44" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Sun ray</text>
-        <line x1="14" y1="56" x2="30" y2="56" stroke="#4a9eff" stroke-width="1.3"/>
-        <text x="34" y="60" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Normal</text>
-        <line x1="14" y1="72" x2="30" y2="72" stroke="rgba(80,220,80,0.6)" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="34" y="76" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">θ incidence</text>
-        <line x1="14" y1="88" x2="30" y2="88" stroke="#00e676" stroke-width="1.8" stroke-dasharray="5,2"/>
-        <text x="34" y="92" font-size="7.5" fill="#00e676" font-family="monospace">Optimum</text>
+        <text id="dBetaLabel" font-size="8.5" fill="rgba(255,255,255,0.75)" font-family="monospace"/>
+
+        <!-- Labels -->
+        <text id="dThetaLabel"  font-size="7.5" fill="rgba(80,220,80,0.85)"  font-family="monospace"/>
+        <text id="dOptLabel1"   font-size="7.5" fill="#00e676" font-family="monospace" font-weight="700"/>
+        <text id="dOptLabel2"   font-size="7.5" fill="#00e676" font-family="monospace"/>
+        <text id="dElevLabel"   font-size="7.5" fill="#ff9d3c" font-family="monospace" opacity="0.55"/>
+
+        <!-- Real sun: glow + corona rays + sphere -->
+        <circle id="dSunGlow" r="26" fill="url(#dGlowGrad)" filter="url(#dGlowF)"/>
+        <g id="dCorona" stroke="#ffcc44" stroke-width="1.5" stroke-linecap="round" opacity="0.65" filter="url(#dCoronaBlur)"/>
+        <circle id="dSun"  r="15" fill="url(#dSunGrad)"/>
+        <circle id="dSunRim" r="15" fill="none" stroke="#ff6600" stroke-width="0.8" opacity="0.35"/>
+
+        <!-- Legend — box and items with movable x positions -->
+        <rect id="dLegendBox" x="8" y="8" width="100" height="92" rx="4" fill="rgba(0,0,0,0.62)"/>
+        <line id="dLegLine1" y1="24" y2="24" stroke="#3a6fe0"              stroke-width="6"   stroke-linecap="round"/>
+        <line id="dLegLine2" y1="40" y2="40" stroke="#ff9d3c"              stroke-width="2"   stroke-dasharray="5,3"/>
+        <line id="dLegLine3" y1="56" y2="56" stroke="#4a9eff"              stroke-width="1.5"/>
+        <line id="dLegLine4" y1="72" y2="72" stroke="rgba(80,220,80,0.6)" stroke-width="1"   stroke-dasharray="2,2"/>
+        <line id="dLegLine5" y1="88" y2="88" stroke="#00e676"              stroke-width="1.8" stroke-dasharray="5,2"/>
+        <text id="dLegTxt1" y="28" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Panel</text>
+        <text id="dLegTxt2" y="44" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Sun ray</text>
+        <text id="dLegTxt3" y="60" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">Normal</text>
+        <text id="dLegTxt4" y="76" font-size="7.5" fill="rgba(255,255,255,0.6)" font-family="monospace">θ incidence</text>
+        <text id="dLegTxt5" y="92" font-size="7.5" fill="#00e676"              font-family="monospace">Optimum</text>
       </svg>
     </div>
 
@@ -2469,114 +2499,129 @@ const SOLAR_MONTHLY_KL = [
 const solarState = { monthOffset: 0 };
 
 function updateSolarDiagram(d){
-  // All geometry computed in a 320×200 viewBox.
-  // Panel base always at (110, 172). Panel faces right (north) or left (south)
-  // based on d.az. Sun is positioned at the correct side at d.elev elevation.
-  const DEG = Math.PI / 180;
-  const bx = 110, by = 172; // panel base
-  const L = 100; // panel length in SVG units
-  const facingNorth = d.az === 0 || d.az < 90 || d.az > 270;
+  const DEG = Math.PI/180;
+  // ViewBox: 320×185. Ground y=168. Panel base at x=160 (exact center).
+  const bx=160, by=168, L=95, sunDist=85;
+  const facingNorth = (d.az === 0 || d.az < 90 || d.az > 270);
+  const dir = facingNorth ? 1 : -1;
 
-  // Panel endpoint — tilt toward the facing direction
-  const dir = facingNorth ? 1 : -1; // +1 = right (north), -1 = left (south)
-  const px = bx + dir * L * Math.cos(d.tilt * DEG);
-  const py = by - L * Math.sin(d.tilt * DEG);
-  const mx = (bx + px) / 2, my = (by + py) / 2; // midpoint
+  // Panel endpoint
+  const px = bx + dir*L*Math.cos(d.tilt*DEG);
+  const py = by - L*Math.sin(d.tilt*DEG);
+  const mx = (bx+px)/2, my = (by+py)/2; // midpoint
 
-  // Panel normal — perpendicular to panel, pointing skyward
-  // Panel angle from horizontal: d.tilt (toward facing direction)
-  // Normal is rotated 90° counterclockwise from panel direction
-  const panelAngle = Math.atan2(by - py, px - bx); // angle of panel vector
-  const normalAngle = panelAngle + Math.PI/2; // 90° CCW = upward normal
-  const normLen = 40;
-  const nx2 = mx + normLen * Math.cos(normalAngle);
-  const ny2 = my + normLen * Math.sin(normalAngle);
+  // Panel normal — perpendicular, always pointing skyward
+  // Panel vector: (px-bx, py-by). Normal (CCW 90°): (-(py-by), px-bx)
+  const pvx=px-bx, pvy=py-by;
+  let nnx=-pvy, nny=pvx;
+  // Ensure normal points upward (nny should be negative in SVG coords)
+  if(nny > 0){ nnx=-nnx; nny=-nny; }
+  const nLen=Math.sqrt(nnx*nnx+nny*nny);
+  const normLen=42;
+  const nnxN=nnx/nLen, nnyN=nny/nLen;
+  const nx2=mx+normLen*nnxN, ny2=my+normLen*nnyN;
 
-  // Sun position — on the facing side, at elevation d.elev
-  // Sun distance from base in SVG units
-  const sunDist = 90;
-  const sunX = bx + dir * sunDist * Math.cos(d.elev * DEG);
-  const sunY = by - sunDist * Math.sin(d.elev * DEG);
+  // Sun center — on the facing side at real elevation
+  const sunX = bx + dir*sunDist*Math.cos(d.elev*DEG);
+  const sunY = by - sunDist*Math.sin(d.elev*DEG);
 
-  // Sun ray — from sun to panel midpoint
-  const rayStartX = sunX + (mx - sunX) * 0.15;
-  const rayStartY = sunY + (my - sunY) * 0.15;
+  // Sun ray — from sun surface (r=15) toward midpoint
+  const rayAngle=Math.atan2(my-sunY, mx-sunX);
+  const rsx=sunX+15*Math.cos(rayAngle), rsy=sunY+15*Math.sin(rayAngle);
 
-  // Optimum ray — along the panel normal, from the facing side
-  const optLen = 70;
-  const optStartX = mx + optLen * Math.cos(normalAngle);
-  const optStartY = my + optLen * Math.sin(normalAngle);
+  // Optimum ray — from along normal direction toward midpoint
+  const optLen=52;
+  const osx=mx+optLen*nnxN, osy=my+optLen*nnyN;
 
-  // θ arc — small arc between sun ray direction and normal at midpoint
-  // Just draw a small visual arc indicator near the midpoint
-  const thetaArcR = 18;
-  const thetaArcEndX = mx + thetaArcR * Math.cos(normalAngle - d.theta * DEG);
-  const thetaArcEndY = my + thetaArcR * Math.sin(normalAngle - d.theta * DEG);
+  // Legend x position: opposite side from sun
+  // sun on right (north) → legend left (x=8); sun on left (south) → legend right (x=212)
+  const legX = facingNorth ? 8 : 212;
 
   function s(id){ return document.getElementById(id); }
-  function setLine(id, x1,y1,x2,y2){
+  function setLine(id,x1,y1,x2,y2){
     const el=s(id); if(!el)return;
-    el.setAttribute('x1', (+x1).toFixed(1));
-    el.setAttribute('y1', (+y1).toFixed(1));
-    el.setAttribute('x2', (+x2).toFixed(1));
-    el.setAttribute('y2', (+y2).toFixed(1));
+    el.setAttribute('x1',(+x1).toFixed(1)); el.setAttribute('y1',(+y1).toFixed(1));
+    el.setAttribute('x2',(+x2).toFixed(1)); el.setAttribute('y2',(+y2).toFixed(1));
   }
-  function setAttr(id, attr, val){ const el=s(id); if(el) el.setAttribute(attr, val); }
-  function setText(id, txt){ const el=s(id); if(el) el.textContent = txt; }
-  function setXY(id, x, y){ const el=s(id); if(!el)return; el.setAttribute('cx',(+x).toFixed(1)); el.setAttribute('cy',(+y).toFixed(1)); }
+  function setAttr(id,attr,val){ const el=s(id); if(el) el.setAttribute(attr,val); }
+  function setText(id,txt){ const el=s(id); if(el) el.textContent=txt; }
+  function setXY(id,x,y){ const el=s(id); if(!el)return; el.setAttribute('cx',(+x).toFixed(1)); el.setAttribute('cy',(+y).toFixed(1)); }
 
-  // Sun
+  // Sun sphere + glow
   setXY('dSun', sunX, sunY);
-  setXY('dSunFill', sunX, sunY);
-  setAttr('dSunIcon','x', sunX.toFixed(1));
-  setAttr('dSunIcon','y', (sunY+5).toFixed(1));
+  setXY('dSunGlow', sunX, sunY);
+  setXY('dSunRim', sunX, sunY);
+  // Corona rays — 8 rays at 45° intervals, from sun surface outward
+  const sunR=15, rayInner=sunR+2, rayOuter=sunR+9;
+  const coronaEl=s('dCorona');
+  if(coronaEl){
+    let coronaSvg='';
+    for(let i=0;i<8;i++){
+      const a=i*45*DEG;
+      const x1=sunX+rayInner*Math.cos(a), y1=sunY+rayInner*Math.sin(a);
+      const x2=sunX+rayOuter*Math.cos(a), y2=sunY+rayOuter*Math.sin(a);
+      coronaSvg+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+    }
+    coronaEl.innerHTML=coronaSvg;
+  }
 
-  // Panel — pass raw numbers, setLine handles formatting
+  // Panel
   setLine('dPanel', bx, by, px, py);
   setLine('dPanelShine', bx, by, px, py);
 
-  // Normal
+  // Normal arrow
   setLine('dNormal', mx, my, nx2, ny2);
 
-  // Sun ray
-  setLine('dSunRay', rayStartX, rayStartY, mx, my);
+  // Sun ray (orange dashed)
+  setLine('dSunRay', rsx, rsy, mx, my);
 
-  // Optimum ray
-  setLine('dOptGlow', optStartX, optStartY, mx, my);
-  setLine('dOptRay', optStartX, optStartY, mx+2, my+1);
-
-  // θ arc
-  setAttr('dThetaArc', 'd', `M ${mx.toFixed(1)},${my.toFixed(1)} A ${thetaArcR},${thetaArcR} 0 0,${facingNorth?0:1} ${thetaArcEndX.toFixed(1)},${thetaArcEndY.toFixed(1)}`);
-  setText('dThetaLabel', `θ=${d.theta}°`);
-  setAttr('dThetaLabel','x',(mx+thetaArcR*1.3).toFixed(1));
-  setAttr('dThetaLabel','y',(my).toFixed(1));
+  // Optimum ray (green)
+  setLine('dOptGlow', osx, osy, mx, my);
+  setLine('dOptRay', osx, osy, mx, my);
 
   // β arc
-  const betaArcR = 38;
-  const betaEndX = bx + dir * betaArcR * Math.cos(d.tilt * DEG);
-  const betaEndY = by - betaArcR * Math.sin(d.tilt * DEG);
-  setAttr('dBetaArc','d', `M ${bx},${by} A ${betaArcR},${betaArcR} 0 0,${facingNorth?1:0} ${betaEndX.toFixed(1)},${betaEndY.toFixed(1)}`);
-  setText('dBetaLabel', `β=${d.tilt}°`);
-  setAttr('dBetaLabel','x', (bx + dir*20).toFixed(1));
-  setAttr('dBetaLabel','y', (by+10).toFixed(1));
+  const bArcR=38;
+  const bex=bx+dir*bArcR*Math.cos(d.tilt*DEG);
+  const bey=by-bArcR*Math.sin(d.tilt*DEG);
+  setAttr('dBetaArc','d',`M ${bx},${by} A ${bArcR},${bArcR} 0 0,${facingNorth?1:0} ${bex.toFixed(1)},${bey.toFixed(1)}`);
+  setText('dBetaLabel',`β=${d.tilt}°`);
+  setAttr('dBetaLabel','x',(bx+dir*18).toFixed(1));
+  setAttr('dBetaLabel','y',(by+11).toFixed(1));
 
-  // Elevation arc
-  setAttr('dElevArc','d', `M ${bx},${by} A 90,90 0 0,${facingNorth?1:0} ${sunX.toFixed(1)},${(sunY+sunDist*0.1).toFixed(1)}`);
-  setText('dElevLabel', `α=${d.elev}°`);
-  setAttr('dElevLabel','x', facingNorth ? '185' : '55');
+  // θ and Optimum labels — place on the opposite side from sun
+  const labelOffX = facingNorth ? -38 : 8;
+  setText('dThetaLabel',`θ=${d.theta}°`);
+  setAttr('dThetaLabel','x',(nx2+labelOffX).toFixed(1));
+  setAttr('dThetaLabel','y',(ny2+4).toFixed(1));
+  setText('dOptLabel1','Optimum');
+  setAttr('dOptLabel1','x',(osx+labelOffX).toFixed(1));
+  setAttr('dOptLabel1','y',(osy-8).toFixed(1));
+  setText('dOptLabel2','(θ=0°)');
+  setAttr('dOptLabel2','x',(osx+labelOffX).toFixed(1));
+  setAttr('dOptLabel2','y',(osy+3).toFixed(1));
+
+  // α elevation label
+  setText('dElevLabel',`α=${d.elev}°`);
+  setAttr('dElevLabel','x', facingNorth ? '168' : '52');
+  setAttr('dElevLabel','y','162');
 
   // N/S ground labels
   setText('dLabelLeft', facingNorth ? '←S' : '←N');
   setText('dLabelRight', facingNorth ? 'N→' : 'S→');
 
-  // Optimum labels
-  const optLabelX = optStartX + dir*10;
-  setText('dOptLabel1','Optimum');
-  setAttr('dOptLabel1','x', optLabelX.toFixed(1));
-  setAttr('dOptLabel1','y', (optStartY-10).toFixed(1));
-  setText('dOptLabel2','(θ=0°)');
-  setAttr('dOptLabel2','x', optLabelX.toFixed(1));
-  setAttr('dOptLabel2','y', (optStartY).toFixed(1));
+  // Legend — move box to correct side
+  const legEl=s('dLegendBox');
+  if(legEl) legEl.setAttribute('x', legX);
+  // Legend line/text elements also shift
+  ['dLegLine1','dLegLine2','dLegLine3','dLegLine4','dLegLine5'].forEach((id,i)=>{
+    const el=s(id); if(!el)return;
+    el.setAttribute('x1',(legX+6).toFixed(0));
+    el.setAttribute('x2',(legX+22).toFixed(0));
+  });
+  ['dLegTxt1','dLegTxt2','dLegTxt3','dLegTxt4','dLegTxt5'].forEach((id,i)=>{
+    const el=s(id); if(!el)return;
+    el.setAttribute('x',(legX+26).toFixed(0));
+  });
 }
 
 function renderSolarAdvisor(){
