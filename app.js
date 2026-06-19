@@ -324,6 +324,7 @@ function handleOrientation(event){
   if (heading !== null) {
     state.heading = (heading + 360) % 360;
     orientationActive = true;
+    hideCompassEnableBtn(); // hide button once sensor is actually working
     updateCompassCaption();
     rotateDial();
     positionMarkers();
@@ -429,16 +430,35 @@ async function enableCompass(){
 }
 
 // Try enabling automatically (works on Android Chrome without a gesture-gated prompt);
-// iOS requires the calibrate button tap below since it needs a user gesture.
+// iOS requires a user gesture tap since DeviceOrientationEvent.requestPermission()
+// must be triggered by a direct user interaction.
 enableCompass();
+
+// Hide the floating "Tap to enable compass" button once the sensor
+// actually starts reporting heading data.
+function hideCompassEnableBtn(){
+  const btn = document.getElementById('compassEnableBtn');
+  if (btn) btn.classList.add('hidden');
+}
+
+// Compass enable button on the dial itself — most visible prompt
+document.getElementById('compassEnableBtn').addEventListener('click', async ()=>{
+  await enableCompass();
+  // Button hides itself after a short delay to confirm sensor started
+  setTimeout(()=>{
+    if (orientationActive) hideCompassEnableBtn();
+  }, 1500);
+});
 
 document.getElementById('calibBtn').addEventListener('click', async ()=>{
   await enableCompass();
+  hideCompassEnableBtn();
   state.calibrated = true;
   document.getElementById('calibStatus').textContent = 'Calibration requested — move phone in a figure‑8';
 });
 document.getElementById('arCalibBtn').addEventListener('click', async ()=>{
   await enableCompass();
+  hideCompassEnableBtn();
 });
 
 // ---------- AR mode camera toggle ----------
