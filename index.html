@@ -2515,12 +2515,14 @@ function updateSolarDiagram(d){
   function s(id){ return document.getElementById(id); }
   function setLine(id, x1,y1,x2,y2){
     const el=s(id); if(!el)return;
-    el.setAttribute('x1',x1.toFixed(1)); el.setAttribute('y1',y1.toFixed(1));
-    el.setAttribute('x2',x2.toFixed(1)); el.setAttribute('y2',y2.toFixed(1));
+    el.setAttribute('x1', (+x1).toFixed(1));
+    el.setAttribute('y1', (+y1).toFixed(1));
+    el.setAttribute('x2', (+x2).toFixed(1));
+    el.setAttribute('y2', (+y2).toFixed(1));
   }
   function setAttr(id, attr, val){ const el=s(id); if(el) el.setAttribute(attr, val); }
   function setText(id, txt){ const el=s(id); if(el) el.textContent = txt; }
-  function setXY(id, x, y){ const el=s(id); if(!el)return; el.setAttribute('cx',x.toFixed(1)); el.setAttribute('cy',y.toFixed(1)); }
+  function setXY(id, x, y){ const el=s(id); if(!el)return; el.setAttribute('cx',(+x).toFixed(1)); el.setAttribute('cy',(+y).toFixed(1)); }
 
   // Sun
   setXY('dSun', sunX, sunY);
@@ -2528,19 +2530,19 @@ function updateSolarDiagram(d){
   setAttr('dSunIcon','x', sunX.toFixed(1));
   setAttr('dSunIcon','y', (sunY+5).toFixed(1));
 
-  // Panel
-  setLine('dPanel', bx, by, px.toFixed(1), py.toFixed(1));
-  setLine('dPanelShine', bx, by, px.toFixed(1), py.toFixed(1));
+  // Panel — pass raw numbers, setLine handles formatting
+  setLine('dPanel', bx, by, px, py);
+  setLine('dPanelShine', bx, by, px, py);
 
   // Normal
-  setLine('dNormal', mx.toFixed(1), my.toFixed(1), nx2.toFixed(1), ny2.toFixed(1));
+  setLine('dNormal', mx, my, nx2, ny2);
 
   // Sun ray
-  setLine('dSunRay', rayStartX.toFixed(1), rayStartY.toFixed(1), mx.toFixed(1), my.toFixed(1));
+  setLine('dSunRay', rayStartX, rayStartY, mx, my);
 
   // Optimum ray
-  setLine('dOptGlow', optStartX.toFixed(1), optStartY.toFixed(1), mx.toFixed(1), my.toFixed(1));
-  setLine('dOptRay', optStartX.toFixed(1), optStartY.toFixed(1), (mx+2).toFixed(1), (my+1).toFixed(1));
+  setLine('dOptGlow', optStartX, optStartY, mx, my);
+  setLine('dOptRay', optStartX, optStartY, mx+2, my+1);
 
   // θ arc
   setAttr('dThetaArc', 'd', `M ${mx.toFixed(1)},${my.toFixed(1)} A ${thetaArcR},${thetaArcR} 0 0,${facingNorth?0:1} ${thetaArcEndX.toFixed(1)},${thetaArcEndY.toFixed(1)}`);
@@ -2616,9 +2618,10 @@ function renderSolarAdvisor(){
     if (azSub) azSub.textContent = d.facing;
   }
 
-  // Update diagram (only when we have full data)
+  // Update diagram — wrapped in try/catch so any SVG error never
+  // blocks the efficiency bar and other cards from rendering
   if (d.elev !== null && d.elev !== undefined) {
-    updateSolarDiagram(d);
+    try { updateSolarDiagram(d); } catch(e){ console.warn('Solar diagram error:', e); }
   }
 
   // Efficiency bar
