@@ -691,15 +691,14 @@ function renderSkyView(){
   if (dayLenEl) dayLenEl.textContent = `${dayHrs} hrs ${dayMins} mins`;
 
   // --- Compute arc horizontal positions (azimuth-relative) ---
-  // --- Static arc: sunrise always left, sunset always right ---
-  // No compass heading involved — this panel is a fixed time-based
-  // diagram, not an azimuth-relative compass view.
-  const xRise    = 8;   // fixed left endpoint
-  const xSet     = 92;  // fixed right endpoint
+  // --- Static arc coordinates ---
+  // Layout: sunset(purple) on LEFT, sunrise(orange) on RIGHT
+  const xSunset  = 8;   // left side  = sunset  end (purple marker)
+  const xSunrise = 92;  // right side = sunrise end (orange marker)
   const yHorizon = 42;
   const yPeak    = 10;
 
-  // Horizon line is always full width, static
+  // Horizon line — always full width, static
   const horizonEl = document.getElementById('skyHorizon');
   if (horizonEl){
     horizonEl.setAttribute('x1', '0');
@@ -708,11 +707,11 @@ function renderSkyView(){
     horizonEl.setAttribute('y2', yHorizon);
   }
 
-  // --- Draw main arc as cubic bezier (always sunrise left → sunset right) ---
+  // --- Draw main arc: from xSunset (left) to xSunrise (right) ---
   const arcPath = document.getElementById('skyArcPath');
   if (arcPath){
     arcPath.setAttribute('d',
-      `M ${xRise},${yHorizon} C ${xRise},${yPeak} ${xSet},${yPeak} ${xSet},${yHorizon}`
+      `M ${xSunset},${yHorizon} C ${xSunset},${yPeak} ${xSunrise},${yPeak} ${xSunrise},${yHorizon}`
     );
     arcPath.style.display = '';
   }
@@ -720,35 +719,39 @@ function renderSkyView(){
   // --- Below-horizon tails ---
   const tailLeft  = document.getElementById('skyTailLeft');
   const tailRight = document.getElementById('skyTailRight');
-  if (tailLeft)  tailLeft.setAttribute('d',  `M ${xRise-12},${yHorizon+6} L ${xRise},${yHorizon}`);
-  if (tailRight) tailRight.setAttribute('d', `M ${xSet},${yHorizon} L ${xSet+12},${yHorizon+6}`);
+  if (tailLeft)  tailLeft.setAttribute('d',  `M ${xSunset-12},${yHorizon+6} L ${xSunset},${yHorizon}`);
+  if (tailRight) tailRight.setAttribute('d', `M ${xSunrise},${yHorizon} L ${xSunrise+12},${yHorizon+6}`);
 
-  // --- Endpoint markers — always visible at fixed positions ---
+  // --- Endpoint markers ---
   const riseMarker = document.getElementById('skyRiseMarker');
   const setMarker  = document.getElementById('skySetMarker');
-  if (riseMarker){ riseMarker.setAttribute('cx', xRise); riseMarker.setAttribute('cy', yHorizon); riseMarker.style.display = ''; }
-  if (setMarker){  setMarker.setAttribute('cx', xSet);  setMarker.setAttribute('cy', yHorizon); setMarker.style.display = ''; }
+  if (riseMarker){ riseMarker.setAttribute('cx', xSunset);  riseMarker.setAttribute('cy', yHorizon); riseMarker.style.display = ''; }
+  if (setMarker){  setMarker.setAttribute('cx', xSunrise); setMarker.setAttribute('cy', yHorizon); setMarker.style.display = ''; }
 
-  // --- Sun dot: position on arc by real time-of-day progress ---
+  // --- Sun dot: travels from xSunrise (RIGHT, t=0) to xSunset (LEFT, t=1) ---
+  // At sunrise (progress=0) the dot is at the RIGHT (orange/sunrise end).
+  // At sunset  (progress=1) the dot is at the LEFT  (purple/sunset end).
+  // The bezier goes LEFT→RIGHT (xSunset→xSunrise), so we pass t=(1-progress)
+  // to make the dot start on the right and move left as the day progresses.
   const sunDot = document.getElementById('skySunDot');
   if (sunDot){
     const nowMs = Date.now();
     const progress = Math.max(0, Math.min(1,
       (nowMs - state.today.sunrise.getTime()) / dayMs
     ));
-    // Arc goes left=sunset, right=sunrise, so invert progress so the dot
-    // starts on the right (sunrise end) and moves left toward sunset.
-    const arcProgress = 1 - progress;
     const isDaytime = nowMs >= state.today.sunrise.getTime() && nowMs <= state.today.sunset.getTime();
 
     if (isDaytime){
-      // Interpolate along the same cubic bezier as the arc
       function cubicBezier(t, p0, p1, p2, p3){
         const mt = 1-t;
         return mt*mt*mt*p0 + 3*mt*mt*t*p1 + 3*mt*t*t*p2 + t*t*t*p3;
       }
-      const dotX = cubicBezier(arcProgress, xRise, xRise, xSet, xSet);
-      const dotY = cubicBezier(arcProgress, yHorizon, yPeak, yPeak, yHorizon);
+      // t=0 → xSunset (left), t=1 → xSunrise (right)
+      // dot at sunrise (progress=0) needs t=1 → xSunrise (right) ✓
+      // dot at sunset  (progress=1) needs t=0 → xSunset  (left)  ✓
+      const t = 1 - progress;
+      const dotX = cubicBezier(t, xSunset, xSunset, xSunrise, xSunrise);
+      const dotY = cubicBezier(t, yHorizon, yPeak, yPeak, yHorizon);
       sunDot.setAttribute('cx', dotX.toFixed(1));
       sunDot.setAttribute('cy', dotY.toFixed(1));
       sunDot.style.display = '';
