@@ -936,6 +936,103 @@ body{
 }
 .permission-box p{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
 
+/* ---------- Shadow Calculator ---------- */
+.shad-card{
+  margin:0 14px 8px;
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  backdrop-filter:blur(8px);
+}
+.shad-sec-label{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.07em;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.shad-input-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.shad-input-label{
+  font-size:12px;
+  color:var(--muted);
+  min-width:76px;
+}
+.shad-slider{ flex:1; accent-color:var(--sunrise); }
+.shad-input-val{
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:600;
+  min-width:52px;
+  text-align:right;
+  color:var(--ink);
+}
+.shad-info-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  color:var(--muted);
+  padding:5px 0;
+  border-bottom:1px solid var(--panel-border);
+}
+.shad-info-val{
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--ink);
+}
+.shad-result-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:0 14px 8px;
+}
+.shad-result-card{
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-sm);
+  padding:10px 12px;
+}
+.shad-result-full{ grid-column:1/-1; }
+.shad-result-label{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.shad-result-val{
+  font-family:var(--mono);
+  font-weight:700;
+  font-size:22px;
+  color:var(--sunrise);
+  line-height:1;
+}
+.shad-result-sub{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--muted);
+  margin-top:3px;
+}
+.shad-tip-val{
+  font-family:var(--mono);
+  font-size:13px;
+  color:var(--ink);
+  margin-top:2px;
+}
+.shad-diagram-card{
+  margin:0 14px 8px;
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+  background:rgba(5,10,20,0.6);
+  border:1px solid var(--panel-border);
+}
+
 /* ---------- PSH — Peak Sun Hours ---------- */
 .psh-fetch-card{
   margin:0 14px 8px;
@@ -1681,6 +1778,87 @@ body{
 
   </section>
 
+  <!-- ============ SHADOW CALCULATOR ============ -->
+  <section class="screen" id="screen-shadow">
+    <div class="screen-title" style="margin:6px 14px 8px;">📐 Shadow Calculator</div>
+
+    <!-- Inputs -->
+    <div class="shad-card">
+      <div class="shad-sec-label">Object</div>
+      <div class="shad-input-row">
+        <span class="shad-input-label">Height</span>
+        <input type="range" min="0.5" max="50" value="10" step="0.5" id="shadHeight" class="shad-slider">
+        <span class="shad-input-val" id="shadHeightOut">10.0 m</span>
+      </div>
+      <div class="shad-input-row" style="margin-bottom:0;">
+        <span class="shad-input-label">Date &amp; Time</span>
+        <input type="datetime-local" id="shadDt" class="preview-input" style="flex:1;font-size:11px;padding:7px 8px;">
+      </div>
+    </div>
+
+    <!-- Sun info -->
+    <div class="shad-card">
+      <div class="shad-sec-label">Sun position</div>
+      <div class="shad-info-row"><span>Elevation</span><span class="shad-info-val" id="shadElev">--°</span></div>
+      <div class="shad-info-row"><span>Azimuth</span><span class="shad-info-val" id="shadAz">--°</span></div>
+      <div class="shad-info-row" style="border:none;"><span>Status</span><span class="shad-info-val" id="shadCond">--</span></div>
+    </div>
+
+    <!-- Results -->
+    <div class="shad-result-grid">
+      <div class="shad-result-card">
+        <div class="shad-result-label">Shadow length</div>
+        <div class="shad-result-val" id="shadLen">--</div>
+        <div class="shad-result-sub">metres</div>
+      </div>
+      <div class="shad-result-card">
+        <div class="shad-result-label">Direction</div>
+        <div class="shad-result-val" id="shadDir">--</div>
+        <div class="shad-result-sub" id="shadDirDeg">--</div>
+      </div>
+      <div class="shad-result-card shad-result-full">
+        <div class="shad-result-label">Shadow tip offset from object base</div>
+        <div class="shad-tip-val" id="shadTip">--</div>
+      </div>
+    </div>
+
+    <!-- Top-down diagram -->
+    <div class="shad-diagram-card">
+      <div class="shad-sec-label">Top-down view</div>
+      <svg id="shadSvg" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+        <!-- compass labels -->
+        <text x="140" y="13" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-family="monospace">N</text>
+        <text x="140" y="208" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-family="monospace">S</text>
+        <text x="10" y="109" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-family="monospace">W</text>
+        <text x="270" y="109" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-family="monospace">E</text>
+        <!-- grid rings -->
+        <circle cx="140" cy="104" r="85" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <circle cx="140" cy="104" r="57" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <circle cx="140" cy="104" r="28" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <line x1="140" y1="19" x2="140" y2="189" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <line x1="55" y1="104" x2="225" y2="104" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <!-- object at center -->
+        <circle cx="140" cy="104" r="5" fill="#ff9d3c"/>
+        <text x="148" y="108" font-size="8" fill="#ff9d3c" font-family="monospace">Object</text>
+        <!-- sun ray (dashed orange from sun toward object) -->
+        <line id="shadSunRay" x1="140" y1="104" x2="100" y2="55" stroke="#ff9d3c" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.55"/>
+        <!-- sun dot -->
+        <circle id="shadSunDot" cx="100" cy="55" r="8" fill="#ff9d3c" opacity="0.8"/>
+        <text id="shadSunLbl" x="100" y="44" text-anchor="middle" font-size="8" fill="#ff9d3c" font-family="monospace">☀</text>
+        <!-- shadow line (blue solid) -->
+        <line id="shadLine" x1="140" y1="104" x2="180" y2="158" stroke="#4a9eff" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+        <circle id="shadTipDot" cx="180" cy="158" r="4" fill="#4a9eff" opacity="0.85"/>
+        <text id="shadTipLbl" x="186" y="162" font-size="8" fill="#4a9eff" font-family="monospace">Tip</text>
+        <!-- scale -->
+        <text id="shadScale" x="140" y="200" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.25)" font-family="monospace">--</text>
+      </svg>
+    </div>
+
+    <div class="note-small" style="margin:0 14px 12px;">
+      Formula: shadow length = height ÷ tan(elevation). Direction is opposite to sun azimuth. Requires GPS and real-time clock.
+    </div>
+  </section>
+
   <!-- ============ LUX READER ============ -->
   <section class="screen" id="screen-lux">
     <div class="screen-title">◉ Lux Reader</div>
@@ -1740,6 +1918,7 @@ body{
     <button class="navbtn" data-screen="forecast"><span class="ic">☰</span>Forecast</button>
     <button class="navbtn" data-screen="solar"><span class="ic">◐</span>Solar</button>
     <button class="navbtn" data-screen="psh"><span class="ic">◈</span>PSH</button>
+    <button class="navbtn" data-screen="shadow"><span class="ic">◧</span>Shadow</button>
     <button class="navbtn" data-screen="lux"><span class="ic">◉</span>Lux</button>
     <button class="navbtn" data-screen="settings"><span class="ic">⚙</span>Settings</button>
   </nav>
@@ -3117,6 +3296,141 @@ document.getElementById('solarResetMonth').addEventListener('click', ()=>{ solar
 
 
 
+
+// ---------- Shadow Calculator ----------
+(function(){
+  const DEG = Math.PI/180;
+
+  function compassDir(az){
+    const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(((az%360)+360)%360/22.5)%16];
+  }
+
+  function setNow(){
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('shadDt').value =
+      `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  function shadCalc(){
+    const heightEl  = document.getElementById('shadHeight');
+    const dtEl      = document.getElementById('shadDt');
+    if(!heightEl || !dtEl) return;
+
+    const h  = +heightEl.value;
+    document.getElementById('shadHeightOut').textContent = h.toFixed(1) + ' m';
+
+    const dt = new Date(dtEl.value);
+    if(isNaN(dt.getTime())){
+      document.getElementById('shadCond').textContent = 'Invalid date';
+      return;
+    }
+
+    // Require GPS
+    if(state.lat === null || state.lon === null || typeof SunCalc === 'undefined'){
+      document.getElementById('shadCond').textContent = 'Waiting for GPS…';
+      document.getElementById('shadLen').textContent = '--';
+      document.getElementById('shadDir').textContent = '--';
+      return;
+    }
+
+    const pos     = SunCalc.getPosition(dt, state.lat, state.lon);
+    const elevDeg = pos.altitude / DEG;
+    const azDeg   = (pos.azimuth / DEG + 180 + 360) % 360;
+
+    document.getElementById('shadElev').textContent = elevDeg.toFixed(1) + '°';
+    document.getElementById('shadAz').textContent   = azDeg.toFixed(1) + '°';
+
+    if(elevDeg <= 0){
+      document.getElementById('shadCond').textContent = '🌙 Sun below horizon — no shadow';
+      document.getElementById('shadLen').textContent  = '∞';
+      document.getElementById('shadDir').textContent  = 'N/A';
+      document.getElementById('shadDirDeg').textContent = 'Sun below horizon';
+      document.getElementById('shadTip').textContent  = 'No shadow at this time';
+      // Hide diagram lines
+      const sl = document.getElementById('shadLine');
+      if(sl) sl.setAttribute('opacity','0');
+      return;
+    } else if(elevDeg < 2){
+      document.getElementById('shadCond').textContent = '⚠ Very low sun — long shadow';
+    } else {
+      document.getElementById('shadCond').textContent = '☀ Sun visible';
+    }
+
+    // Restore diagram opacity
+    const sl = document.getElementById('shadLine');
+    if(sl) sl.setAttribute('opacity','0.85');
+
+    // Shadow length = h / tan(elevation)
+    const len = h / Math.tan(pos.altitude);
+    // Shadow direction = opposite to sun azimuth
+    const shadowAz    = (azDeg + 180) % 360;
+    const shadowAzRad = shadowAz * DEG;
+
+    document.getElementById('shadLen').textContent     = len >= 999 ? '>999' : len.toFixed(1);
+    document.getElementById('shadDir').textContent     = compassDir(shadowAz);
+    document.getElementById('shadDirDeg').textContent  = shadowAz.toFixed(0) + '° from N';
+
+    // Tip offset in N/E
+    const tipN = len * Math.cos(shadowAzRad);
+    const tipE = len * Math.sin(shadowAzRad);
+    document.getElementById('shadTip').textContent =
+      (tipN >= 0 ? '+' : '') + tipN.toFixed(1) + ' m N  ·  ' +
+      (tipE >= 0 ? '+' : '') + tipE.toFixed(1) + ' m E';
+
+    // Update SVG diagram
+    const cx = 140, cy = 104, maxR = 82;
+    // Scale so shadow fits within maxR px
+    const scale = Math.min(maxR / Math.max(len, 0.1), maxR / h);
+    const svgLen = Math.min(maxR, len * scale);
+
+    // Shadow line (from object toward tip)
+    const sx = cx + svgLen * Math.sin(shadowAzRad);
+    const sy = cy - svgLen * Math.cos(shadowAzRad);
+    document.getElementById('shadLine').setAttribute('x2', sx.toFixed(1));
+    document.getElementById('shadLine').setAttribute('y2', sy.toFixed(1));
+    document.getElementById('shadTipDot').setAttribute('cx', sx.toFixed(1));
+    document.getElementById('shadTipDot').setAttribute('cy', sy.toFixed(1));
+    document.getElementById('shadTipLbl').setAttribute('x', (sx + 6).toFixed(1));
+    document.getElementById('shadTipLbl').setAttribute('y', (sy + 4).toFixed(1));
+
+    // Sun dot (opposite side from shadow, at fixed distance 75px)
+    const sunDist = 75;
+    const sunAzRad = azDeg * DEG;
+    const sunX = cx + sunDist * Math.sin(sunAzRad);
+    const sunY = cy - sunDist * Math.cos(sunAzRad);
+    document.getElementById('shadSunDot').setAttribute('cx', sunX.toFixed(1));
+    document.getElementById('shadSunDot').setAttribute('cy', sunY.toFixed(1));
+    document.getElementById('shadSunLbl').setAttribute('x', sunX.toFixed(1));
+    document.getElementById('shadSunLbl').setAttribute('y', (sunY - 11).toFixed(1));
+    document.getElementById('shadSunRay').setAttribute('x2', sunX.toFixed(1));
+    document.getElementById('shadSunRay').setAttribute('y2', sunY.toFixed(1));
+
+    // Scale label
+    const mPerRing = (28 / scale).toFixed(1);
+    document.getElementById('shadScale').textContent = 'Each ring = ' + mPerRing + ' m';
+  }
+
+  // Init
+  setNow();
+  shadCalc();
+
+  document.getElementById('shadHeight').addEventListener('input', shadCalc);
+  document.getElementById('shadDt').addEventListener('change', shadCalc);
+  document.getElementById('shadDt').addEventListener('input', shadCalc);
+
+  // Re-run when GPS resolves
+  const _origComputeSunData = window._shadGpsHooked;
+  if(!_origComputeSunData){
+    window._shadGpsHooked = true;
+    const origComputeSunData = computeSunData;
+    window.computeSunData = function(){
+      origComputeSunData.apply(this, arguments);
+      shadCalc();
+    };
+  }
+})();
 
 // ---------- PSH — Peak Sun Hours (NASA POWER) ----------
 const PSH_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
