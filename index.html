@@ -1661,8 +1661,11 @@ body{
 
         <!-- Ground -->
         <line x1="30" y1="168" x2="310" y2="168" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-        <text id="dLabelLeft"  x="36"  y="180" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">←S</text>
-        <text id="dLabelRight" x="282" y="180" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">N→</text>
+        <!-- Ground S/N triangle markers -->
+        <polygon id="dTriS" points="30,168 48,162 48,174" fill="#6b3fa0" opacity="0.8"/>
+        <text id="dLabelLeft"  x="52"  y="173" font-size="10" font-weight="700" fill="#9b6fd4" font-family="monospace">S</text>
+        <polygon id="dTriN" points="310,168 292,162 292,174" fill="#ff9d3c" opacity="0.8"/>
+        <text id="dLabelRight" x="272" y="173" font-size="10" font-weight="700" fill="#ff9d3c" font-family="monospace">N</text>
 
         <!-- Zenith — fixed at x=160 center -->
         <line x1="160" y1="10" x2="160" y2="168" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" stroke-dasharray="3,3" marker-end="url(#dArrW)"/>
@@ -5486,23 +5489,24 @@ const solarState = { monthOffset: 0 };
 
 function updateSolarDiagram(d){
   const DEG = Math.PI/180;
-  // ViewBox: 320×185. Ground y=168. Panel base at x=160 (exact center).
   const bx=160, by=168, L=95, sunDist=115;
   const facingNorth = (d.az === 0 || d.az < 90 || d.az > 270);
   const dir = facingNorth ? 1 : -1;
 
-  // Panel endpoint — base at center, extends toward facing direction
-  const pbx = bx;
-  const pby = by;
-  const px = bx + dir*L*Math.cos(d.tilt*DEG);
-  const py = by - L*Math.sin(d.tilt*DEG);
-  const mx = (pbx+px)/2, my = (pby+py)/2; // midpoint
+  // CORRECT panel geometry:
+  // North-facing: base on SOUTH side (left), high end on NORTH side (right)
+  // South-facing: base on NORTH side (right), high end on SOUTH side (left)
+  // Base is 1/2 panel length from center toward the OPPOSITE of facing direction
+  // High end is 1/2 panel length from center toward the facing direction
+  const half = L / 2;
+  const pbx = bx - dir * half * Math.cos(d.tilt*DEG); // base (lower end, opposite side)
+  const pby = by + half * Math.sin(d.tilt*DEG);         // base y (lower)
+  const px  = bx + dir * half * Math.cos(d.tilt*DEG);  // high end (facing side)
+  const py  = by - half * Math.sin(d.tilt*DEG);         // high end y (higher)
+  const mx  = bx, my = by - 0;                          // midpoint at center
 
-  // Panel normal — points perpendicular to panel toward the TOP face (facing side)
-  // For a panel tilted β° toward direction dir:
-  // normal = (dir*sin(β), -cos(β))  — directly from geometry, no rotation needed
-  // This correctly points toward the facing side (right for north, left for south)
-  const pvx=px-pbx, pvy=py-by;
+  // Normal — top face points toward facing side
+  // For North-facing: normal points RIGHT+UP; South-facing: LEFT+UP
   const nnxN = dir * Math.sin(d.tilt*DEG);
   const nnyN = -Math.cos(d.tilt*DEG);
   const normLen=42;
@@ -5556,24 +5560,24 @@ function updateSolarDiagram(d){
   setLine('dPanel', pbx, pby, px, py);
   setLine('dPanelShine', pbx, pby, px, py);
 
-  // Normal arrow
+  // Normal arrow from midpoint
   setLine('dNormal', mx, my, nx2, ny2);
 
-  // Sun ray (orange dashed)
+  // Sun ray
   setLine('dSunRay', rsx, rsy, mx, my);
 
-  // Optimum ray (green)
+  // Optimum ray
   setLine('dOptGlow', osx, osy, mx, my);
   setLine('dOptRay', osx, osy, mx, my);
 
-  // β arc
-  const bArcR=38;
-  const bex=pbx+dir*bArcR*Math.cos(d.tilt*DEG);
-  const bey=pby-bArcR*Math.sin(d.tilt*DEG);
-  setAttr('dBetaArc','d',`M ${pbx},${pby} A ${bArcR},${bArcR} 0 0,${facingNorth?1:0} ${bex.toFixed(1)},${bey.toFixed(1)}`);
+  // β arc — at the base (lower end)
+  const bArcR=30;
+  const bex = pbx + dir*bArcR*Math.cos(d.tilt*DEG);
+  const bey = pby - bArcR*Math.sin(d.tilt*DEG);
+  setAttr('dBetaArc','d',`M ${(pbx+dir*bArcR).toFixed(1)},${pby.toFixed(1)} A ${bArcR},${bArcR} 0 0,${facingNorth?0:1} ${bex.toFixed(1)},${bey.toFixed(1)}`);
   setText('dBetaLabel',`β=${d.tilt}°`);
-  setAttr('dBetaLabel','x',(pbx+dir*18).toFixed(1));
-  setAttr('dBetaLabel','y',(pby+11).toFixed(1));
+  setAttr('dBetaLabel','x',(bx).toFixed(1));
+  setAttr('dBetaLabel','y',(by+12).toFixed(1));
 
   // θ and Optimum labels — place on the opposite side from sun
   const labelOffX = facingNorth ? -38 : 8;
@@ -5592,9 +5596,7 @@ function updateSolarDiagram(d){
   setAttr('dElevLabel','x', facingNorth ? '168' : '52');
   setAttr('dElevLabel','y','162');
 
-  // N/S ground labels — fixed: left=South, right=North
-  setText('dLabelLeft', '←S');
-  setText('dLabelRight', 'N→');
+  // N/S ground labels are static triangles in HTML — no JS update needed
 
   // Legend — move box to correct side
   const legEl=s('dLegendBox');
