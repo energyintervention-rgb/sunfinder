@@ -5591,9 +5591,9 @@ function updateSolarDiagram(d){
   setAttr('dElevLabel','x', facingNorth ? '168' : '52');
   setAttr('dElevLabel','y','162');
 
-  // N/S ground labels
-  setText('dLabelLeft', facingNorth ? '←S' : '←N');
-  setText('dLabelRight', facingNorth ? 'N→' : 'S→');
+  // N/S ground labels — fixed: left=South, right=North (diagram is always N-S side view)
+  setText('dLabelLeft', '←S');
+  setText('dLabelRight', 'N→');
 
   // Legend — move box to correct side
   const legEl=s('dLegendBox');
