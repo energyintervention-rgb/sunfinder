@@ -36,7 +36,7 @@
   --radius:20px;
   --radius-sm:12px;
 
-  --display:'Space Grotesk',system-ui,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   --mono:ui-monospace,'SF Mono','Menlo','Consolas',monospace;
 }
 
@@ -938,8 +938,8 @@ body{
 
 /* ---------- PSH — Peak Sun Hours ---------- */
 .psh-fetch-card{
-  margin:0 20px 12px;
-  padding:14px 16px;
+  margin:0 14px 8px;
+  padding:10px 14px;
   border-radius:var(--radius-sm);
   background:var(--panel);
   border:1px solid var(--panel-border);
@@ -973,12 +973,12 @@ body{
 .psh-status.err{ color:#d24343; }
 .psh-stat-grid{
   display:flex;
-  gap:10px;
-  margin:0 20px 12px;
+  gap:8px;
+  margin:0 14px 8px;
 }
 .psh-stat{
   flex:1;
-  padding:12px 14px;
+  padding:10px 12px;
   border-radius:var(--radius-sm);
   background:var(--panel);
   border:1px solid var(--panel-border);
@@ -988,24 +988,24 @@ body{
   text-transform:uppercase;
   letter-spacing:0.07em;
   color:var(--muted);
-  margin-bottom:4px;
+  margin-bottom:3px;
 }
 .psh-stat-val{
   font-family:var(--mono);
   font-weight:700;
-  font-size:26px;
+  font-size:22px;
   color:var(--sunrise);
   line-height:1;
 }
 .psh-stat-sub{
   font-family:var(--mono);
-  font-size:11px;
+  font-size:10px;
   color:var(--muted);
-  margin-top:4px;
+  margin-top:3px;
 }
 .psh-chart-card{
-  margin:0 20px 12px;
-  padding:14px 16px;
+  margin:0 14px 8px;
+  padding:10px 14px;
   border-radius:var(--radius-sm);
   background:var(--panel);
   border:1px solid var(--panel-border);
@@ -1016,7 +1016,7 @@ body{
   text-transform:uppercase;
   letter-spacing:0.07em;
   color:var(--muted);
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 .psh-legend{
   display:flex;
@@ -1035,8 +1035,8 @@ body{
 .psh-legend-dot.mid{  background:#EF9F27; }
 .psh-legend-dot.low{  background:#FAC775; }
 .psh-yield-card{
-  margin:0 20px 12px;
-  padding:14px 16px;
+  margin:0 14px 8px;
+  padding:10px 14px;
   border-radius:var(--radius-sm);
   background:var(--panel);
   border:1px solid var(--panel-border);
@@ -1603,7 +1603,7 @@ body{
 
   <!-- ============ PSH — PEAK SUN HOURS ============ -->
   <section class="screen" id="screen-psh">
-    <div class="screen-title">☀ Peak Sun Hours</div>
+    <div class="screen-title" style="margin:6px 14px 8px;">☀ Peak Sun Hours</div>
 
     <!-- Fetch card -->
     <div class="psh-fetch-card">
@@ -1633,7 +1633,7 @@ body{
     <!-- Chart card -->
     <div class="psh-chart-card">
       <div class="psh-chart-label">Monthly PSH (kWh/m²/day)</div>
-      <div style="position:relative;height:180px;">
+      <div style="position:relative;height:150px;">
         <canvas id="pshChart" role="img" aria-label="Monthly peak sun hours bar chart">Waiting for data.</canvas>
       </div>
       <div class="psh-legend">
@@ -1739,7 +1739,7 @@ body{
     <button class="navbtn active" data-screen="home"><span class="ic">⌖</span>Home</button>
     <button class="navbtn" data-screen="forecast"><span class="ic">☰</span>Forecast</button>
     <button class="navbtn" data-screen="solar"><span class="ic">◐</span>Solar</button>
-    <button class="navbtn" data-screen="psh"><span class="ic">☀</span>PSH</button>
+    <button class="navbtn" data-screen="psh"><span class="ic">◈</span>PSH</button>
     <button class="navbtn" data-screen="lux"><span class="ic">◉</span>Lux</button>
     <button class="navbtn" data-screen="settings"><span class="ic">⚙</span>Settings</button>
   </nav>
@@ -3202,8 +3202,23 @@ async function pshFetch(){
     fetch(url)
       .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(json=>{
-        const monthly = json.properties.parameter.ALLSKY_SFC_SW_DWN;
-        const data = ['01','02','03','04','05','06','07','08','09','10','11','12'].map(k=>+monthly[k]);
+        // Climatology API returns month keys as JAN,FEB,...,DEC (not 01,02...)
+        const param = json.properties && json.properties.parameter
+          ? json.properties.parameter.ALLSKY_SFC_SW_DWN
+          : json.features && json.features[0].properties.parameter.ALLSKY_SFC_SW_DWN;
+        if(!param) throw new Error('Unexpected API response structure');
+        const monthKeys = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+        // Fallback: also try numeric keys 1-12 in case response format varies
+        let data;
+        if(param['JAN'] !== undefined){
+          data = monthKeys.map(k => +param[k]);
+        } else if(param['01'] !== undefined){
+          data = ['01','02','03','04','05','06','07','08','09','10','11','12'].map(k=>+param[k]);
+        } else {
+          // Try numeric keys 1-12
+          data = [1,2,3,4,5,6,7,8,9,10,11,12].map(k=>+param[k]);
+        }
+        if(data.some(v=>isNaN(v))) throw new Error('NaN in data — unexpected key format. Keys: '+JSON.stringify(Object.keys(param).slice(0,5)));
         pshData = data;
         pshBuildChart(data);
         pshUpdateStats(data);
