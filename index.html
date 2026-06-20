@@ -936,6 +936,63 @@ body{
 }
 .permission-box p{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
 
+/* ---------- Sun Path Diagram ---------- */
+.sp-card{
+  margin:0 14px 8px;
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  backdrop-filter:blur(8px);
+}
+.sp-chart-card{
+  margin:0 14px 8px;
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+}
+.sp-sec-label{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.07em;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.sp-info-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  color:var(--muted);
+  padding:4px 0;
+  border-bottom:1px solid var(--panel-border);
+}
+.sp-info-val{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--ink);
+}
+.sp-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:8px;
+}
+.sp-leg-item{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  font-size:10px;
+  color:rgba(238,243,251,0.5);
+}
+.sp-leg-line{
+  width:12px;
+  height:3px;
+  border-radius:2px;
+  display:inline-block;
+}
+
 /* ---------- Shadow Calculator ---------- */
 .shad-card{
   margin:0 14px 8px;
@@ -1778,6 +1835,75 @@ body{
 
   </section>
 
+  <!-- ============ SUN PATH DIAGRAM ============ -->
+  <section class="screen" id="screen-sunpath">
+    <div class="screen-title" style="margin:6px 14px 8px;">🌐 Sun Path</div>
+
+    <!-- Location info -->
+    <div class="sp-card">
+      <div class="sp-sec-label">Location</div>
+      <div class="sp-info-row"><span>Coordinates</span><span class="sp-info-val" id="spCoords">Waiting for GPS…</span></div>
+      <div class="sp-info-row"><span>Current sun</span><span class="sp-info-val" id="spCurrentSun">--</span></div>
+      <div class="sp-info-row" style="border:none;"><span>Solar noon</span><span class="sp-info-val" id="spNoon">--</span></div>
+    </div>
+
+    <!-- Main chart -->
+    <div class="sp-chart-card">
+      <div class="sp-sec-label">Azimuth vs Altitude — all months</div>
+      <svg id="spSvg" viewBox="0 0 340 215" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#04080f;border-radius:8px;overflow:hidden;">
+        <!-- Altitude grid lines -->
+        <g font-family="monospace" font-size="7" fill="rgba(255,255,255,0.3)">
+          <line x1="28" y1="180" x2="332" y2="180" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+          <text x="22" y="183" text-anchor="end">0°</text>
+          <line x1="28" y1="121" x2="332" y2="121" stroke="rgba(255,255,255,0.07)" stroke-width="0.7"/>
+          <text x="22" y="124" text-anchor="end">30°</text>
+          <line x1="28" y1="62" x2="332" y2="62" stroke="rgba(255,255,255,0.07)" stroke-width="0.7"/>
+          <text x="22" y="65" text-anchor="end">60°</text>
+          <line x1="28" y1="10" x2="332" y2="10" stroke="rgba(255,255,255,0.04)" stroke-width="0.7"/>
+          <text x="22" y="13" text-anchor="end">90°</text>
+        </g>
+        <!-- Azimuth grid lines -->
+        <g font-family="monospace" font-size="7" fill="rgba(255,255,255,0.3)">
+          <line x1="28"  y1="10" x2="28"  y2="180" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+          <text x="28"  y="192" text-anchor="middle">N 0°</text>
+          <line x1="103" y1="10" x2="103" y2="180" stroke="rgba(255,255,255,0.06)" stroke-width="0.7"/>
+          <text x="103" y="192" text-anchor="middle">E 90°</text>
+          <line x1="180" y1="10" x2="180" y2="180" stroke="rgba(255,255,255,0.06)" stroke-width="0.7"/>
+          <text x="180" y="192" text-anchor="middle">S 180°</text>
+          <line x1="257" y1="10" x2="257" y2="180" stroke="rgba(255,255,255,0.06)" stroke-width="0.7"/>
+          <text x="257" y="192" text-anchor="middle">W 270°</text>
+          <line x1="332" y1="10" x2="332" y2="180" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+          <text x="332" y="192" text-anchor="middle">N 360°</text>
+        </g>
+        <!-- Clip path for curves -->
+        <defs><clipPath id="spClip"><rect x="28" y="10" width="304" height="170"/></clipPath></defs>
+        <!-- Month path curves injected by JS -->
+        <g id="spPaths" clip-path="url(#spClip)"></g>
+        <!-- Hour tick marks injected by JS -->
+        <g id="spHourTicks" clip-path="url(#spClip)"></g>
+        <!-- Current sun dot -->
+        <circle id="spSunDot" cx="-20" cy="-20" r="5.5" fill="white" opacity="0.95" style="filter:drop-shadow(0 0 5px rgba(255,220,100,1));"/>
+        <!-- Alt label -->
+        <text x="332" y="8" text-anchor="end" font-size="7" fill="rgba(255,255,255,0.25)" font-family="monospace">ALT</text>
+        <text x="332" y="207" text-anchor="end" font-size="7" fill="rgba(255,255,255,0.25)" font-family="monospace">AZ →</text>
+      </svg>
+      <!-- Legend -->
+      <div class="sp-legend" id="spLegend"></div>
+    </div>
+
+    <!-- Today key times -->
+    <div class="sp-card">
+      <div class="sp-sec-label">Today</div>
+      <div class="sp-info-row"><span>Sunrise</span><span class="sp-info-val" id="spRise">--</span></div>
+      <div class="sp-info-row"><span>Solar noon</span><span class="sp-info-val" id="spNoonTime">--</span></div>
+      <div class="sp-info-row" style="border:none;"><span>Sunset</span><span class="sp-info-val" id="spSet">--</span></div>
+    </div>
+
+    <div class="note-small" style="margin:0 14px 12px;">
+      Each curve = one month (15th). X = azimuth (0°=N, 90°=E, 180°=S, 270°=W). Y = elevation above horizon. White dot = current sun. Hour marks shown on Jun curve.
+    </div>
+  </section>
+
   <!-- ============ SHADOW CALCULATOR ============ -->
   <section class="screen" id="screen-shadow">
     <div class="screen-title" style="margin:6px 14px 8px;">📐 Shadow Calculator</div>
@@ -1918,6 +2044,7 @@ body{
     <button class="navbtn" data-screen="forecast"><span class="ic">☰</span>Forecast</button>
     <button class="navbtn" data-screen="solar"><span class="ic">◐</span>Solar</button>
     <button class="navbtn" data-screen="psh"><span class="ic">◈</span>PSH</button>
+    <button class="navbtn" data-screen="sunpath"><span class="ic">⊙</span>Path</button>
     <button class="navbtn" data-screen="shadow"><span class="ic">◧</span>Shadow</button>
     <button class="navbtn" data-screen="lux"><span class="ic">◉</span>Lux</button>
     <button class="navbtn" data-screen="settings"><span class="ic">⚙</span>Settings</button>
@@ -3296,6 +3423,180 @@ document.getElementById('solarResetMonth').addEventListener('click', ()=>{ solar
 
 
 
+
+// ---------- Sun Path Diagram ----------
+(function(){
+  const DEG = Math.PI/180;
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const COLORS = [
+    '#e63030','#e05a20','#d4800e','#c9a800','#90b800','#30b060',
+    '#20a0c0','#3060d0','#6030c0','#9020a0','#c02060','#e03040'
+  ];
+
+  // Chart coordinate mapping
+  // X: az 0-360 → x 28-332 (304px wide)
+  // Y: alt 0-90 → y 180-10 (170px tall)
+  function toX(az)  { return 28 + (az / 360) * 304; }
+  function toY(alt) { return 180 - (alt / 90) * 170; }
+
+  function drawSunPath(lat, lon){
+    const pathGroup  = document.getElementById('spPaths');
+    const hourGroup  = document.getElementById('spHourTicks');
+    const legendEl   = document.getElementById('spLegend');
+    if(!pathGroup) return;
+    pathGroup.innerHTML = '';
+    hourGroup.innerHTML = '';
+    legendEl.innerHTML  = '';
+
+    const utcOff = Math.round(lon / 15);
+
+    for(let m = 0; m < 12; m++){
+      const points = [];
+      // Sample every 15 minutes for smooth curves
+      for(let minOfDay = 0; minOfDay < 1440; minOfDay += 15){
+        const utcMs = Date.UTC(2026, m, 15, 0, 0, 0) - utcOff * 3600000 + minOfDay * 60000;
+        const pos = SunCalc.getPosition(new Date(utcMs), lat, lon);
+        const alt = pos.altitude / DEG;
+        const az  = (pos.azimuth / DEG + 180 + 360) % 360;
+        if(alt > 0) points.push({ az, alt, minOfDay });
+      }
+      if(points.length < 2) continue;
+
+      // Build SVG path — split at large az jumps (crossed N meridian)
+      let segments = [[]], prev = null;
+      for(const p of points){
+        if(prev && Math.abs(p.az - prev.az) > 90){
+          segments.push([]);
+        }
+        segments[segments.length-1].push(p);
+        prev = p;
+      }
+
+      const isSolstice = (m === 5 || m === 11);
+      for(const seg of segments){
+        if(seg.length < 2) continue;
+        let d = '';
+        for(let i = 0; i < seg.length; i++){
+          const x = toX(seg[i].az), y = toY(seg[i].alt);
+          d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+        }
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', COLORS[m]);
+        path.setAttribute('stroke-width', isSolstice ? '2' : '1.2');
+        path.setAttribute('opacity', isSolstice ? '0.9' : '0.55');
+        path.setAttribute('stroke-linecap', 'round');
+        pathGroup.appendChild(path);
+      }
+
+      // Hour tick marks on Jun curve only (avoid clutter)
+      if(m === 5){
+        for(let h = 6; h <= 19; h++){
+          const minOfDay = h * 60;
+          const utcMs = Date.UTC(2026, m, 15, 0, 0, 0) - utcOff * 3600000 + minOfDay * 60000;
+          const pos = SunCalc.getPosition(new Date(utcMs), lat, lon);
+          const alt = pos.altitude / DEG;
+          const az  = (pos.azimuth / DEG + 180 + 360) % 360;
+          if(alt <= 0) continue;
+          const x = toX(az), y = toY(alt);
+          // Tick circle
+          const tick = document.createElementNS('http://www.w3.org/2000/svg','circle');
+          tick.setAttribute('cx', x.toFixed(1));
+          tick.setAttribute('cy', y.toFixed(1));
+          tick.setAttribute('r', '2');
+          tick.setAttribute('fill', COLORS[m]);
+          tick.setAttribute('opacity', '0.9');
+          hourGroup.appendChild(tick);
+          // Hour label (skip some to avoid overlap)
+          if(h % 2 === 0){
+            const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+            lbl.setAttribute('x', (x + 4).toFixed(1));
+            lbl.setAttribute('y', (y - 2).toFixed(1));
+            lbl.setAttribute('font-size', '6.5');
+            lbl.setAttribute('fill', 'rgba(255,255,255,0.45)');
+            lbl.setAttribute('font-family', 'monospace');
+            lbl.textContent = h < 12 ? h+'AM' : h === 12 ? '12PM' : (h-12)+'PM';
+            hourGroup.appendChild(lbl);
+          }
+        }
+      }
+
+      // Legend item
+      const item = document.createElement('div');
+      item.className = 'sp-leg-item';
+      item.innerHTML = `<span class="sp-leg-line" style="background:${COLORS[m]};height:${isSolstice?'3':'2'}px;opacity:${isSolstice?1:0.7};"></span>${MONTHS[m]}`;
+      legendEl.appendChild(item);
+    }
+  }
+
+  function updateCurrentSun(lat, lon){
+    if(!lat || !lon || typeof SunCalc === 'undefined') return;
+    const now = new Date();
+    const pos = SunCalc.getPosition(now, lat, lon);
+    const alt = pos.altitude / DEG;
+    const az  = (pos.azimuth / DEG + 180 + 360) % 360;
+    const dot = document.getElementById('spSunDot');
+    const curEl = document.getElementById('spCurrentSun');
+    if(alt > 0){
+      if(dot){ dot.setAttribute('cx', toX(az).toFixed(1)); dot.setAttribute('cy', toY(alt).toFixed(1)); }
+      if(curEl) curEl.textContent = `Az ${az.toFixed(0)}° · Alt ${alt.toFixed(1)}°`;
+    } else {
+      if(dot){ dot.setAttribute('cx', '-20'); dot.setAttribute('cy', '-20'); }
+      if(curEl) curEl.textContent = 'Below horizon';
+    }
+
+    // Solar noon
+    const times = SunCalc.getTimes(now, lat, lon);
+    const noonEl = document.getElementById('spNoon');
+    const noonPos = SunCalc.getPosition(times.solarNoon, lat, lon);
+    if(noonEl) noonEl.textContent = fmtTime(times.solarNoon) + ' · Alt ' + (noonPos.altitude/DEG).toFixed(1) + '°';
+
+    // Today card
+    const risePos = SunCalc.getPosition(times.sunrise, lat, lon);
+    const setPos  = SunCalc.getPosition(times.sunset,  lat, lon);
+    const riseAz  = (risePos.azimuth/DEG+180+360)%360;
+    const setAz   = (setPos.azimuth/DEG+180+360)%360;
+    const riseEl  = document.getElementById('spRise');
+    const noonTimeEl = document.getElementById('spNoonTime');
+    const setEl   = document.getElementById('spSet');
+    if(riseEl)    riseEl.textContent    = fmtTime(times.sunrise)   + ' · Az ' + riseAz.toFixed(0) + '°';
+    if(noonTimeEl) noonTimeEl.textContent = fmtTime(times.solarNoon) + ' · Alt ' + (noonPos.altitude/DEG).toFixed(1) + '° · Az ' + ((noonPos.azimuth/DEG+180+360)%360).toFixed(0) + '°';
+    if(setEl)     setEl.textContent     = fmtTime(times.sunset)    + ' · Az ' + setAz.toFixed(0) + '°';
+  }
+
+  function renderSunPath(){
+    const lat = state.lat, lon = state.lon;
+    if(lat === null || lon === null || typeof SunCalc === 'undefined') return;
+    const coordEl = document.getElementById('spCoords');
+    if(coordEl) coordEl.textContent = lat.toFixed(4) + '°, ' + lon.toFixed(4) + '°';
+    drawSunPath(lat, lon);
+    updateCurrentSun(lat, lon);
+    // Live sun dot updates every minute
+    clearInterval(window._spTimer);
+    window._spTimer = setInterval(() => updateCurrentSun(lat, lon), 60000);
+  }
+
+  // Hook into GPS resolution
+  const _origCSP = window._spGpsHooked;
+  if(!_origCSP){
+    window._spGpsHooked = true;
+    const origCSP = window.computeSunData || computeSunData;
+    window.computeSunData = function(){
+      origCSP.apply(this, arguments);
+      renderSunPath();
+    };
+  }
+
+  // Render when tab is clicked
+  document.querySelectorAll('.navbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.screen === 'sunpath') renderSunPath();
+    });
+  });
+
+  window.renderSunPath = renderSunPath;
+})();
 
 // ---------- Shadow Calculator ----------
 (function(){
