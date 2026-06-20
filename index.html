@@ -746,17 +746,6 @@ body{
   color:var(--muted);
 }
 
-.calib-note{
-  margin:14px 20px 0;
-  padding:12px 14px;
-  border-radius:var(--radius-sm);
-  background:rgba(255,157,60,0.12);
-  border:1px solid rgba(255,157,60,0.3);
-  font-size:12px;
-  color:var(--ink);
-  display:flex;
-  gap:8px;
-}
 
 .screen-title{
   font-size:22px;
@@ -1304,23 +1293,9 @@ body{
       </div>
     </div>
 
-    <div class="section-title">Sensors</div>
-    <div class="settings-list">
-      <div class="setting-row">
-      </div>
-      <div class="setting-row">
-        <div class="stext"><span class="stitle">Compass calibration</span><span class="ssub" id="calibStatus">Not yet calibrated</span></div>
-        <button class="btn" id="calibBtn" style="flex:none;padding:8px 14px;font-size:12px;">Calibrate</button>
-      </div>
-    </div>
-
-    <div class="calib-note">
-      ⚠ <span>If your sunrise/sunset readings seem off, calibrate by moving your phone in a figure‑8 motion. This is a real device API call — accuracy still depends on your phone's hardware and nearby magnetic interference.</span>
-    </div>
-
-    <div class="section-title">About this prototype</div>
+    <div class="section-title">About</div>
     <div class="note-small" style="margin-bottom:8px;">
-      This is a browser-based mock-up, not the final iOS/Android app. Sunrise/sunset/azimuth values are real (SunCalc library). Compass heading uses your device's real orientation sensor where your browser/OS permits it. AR camera view is a simplified overlay, not true AR tracking.
+      Sun Finder uses real astronomical calculations (SunCalc library) for all sunrise, sunset and azimuth values. Compass heading uses your device's orientation sensor. No data is sent to any server — everything runs locally on your device.
     </div>
   </section>
 
@@ -1671,7 +1646,6 @@ const state = {
   headingSource: null,      // 'absolute' | 'webkit' | null
   timeFormat: '12',         // '12' | '24'
   theme: 'dark',
-  calibrated: false,
   forecastDays: [],
   previewResult: null,      // { azimuth, altitudeDeg, dateTime } or null until computed
   today: null,              // { sunrise, sunset, sunriseAz, sunsetAz }
@@ -2102,12 +2076,7 @@ document.getElementById('compassEnableBtn').addEventListener('click', async ()=>
   }, 1500);
 });
 
-document.getElementById('calibBtn').addEventListener('click', async ()=>{
-  await enableCompass();
-  hideCompassEnableBtn();
-  state.calibrated = true;
-  document.getElementById('calibStatus').textContent = 'Calibration requested — move phone in a figure‑8';
-});
+// Compass calibration button removed — compass enabled via Home screen dial button only
 
 // ---------- AR mode removed ----------
 // =========================================================
